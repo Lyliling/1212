@@ -2,57 +2,47 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <title>게시판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* 화면 초기화 */
+        /* 화면 초기화: 제목 없이 바로 시작 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #ffffff; font-family: sans-serif; width: 100%; overflow-x: hidden; }
-
-        /* 상단 바 - 무조건 보이게 높이 고정 */
-        .header { 
-            background: #3b4890; color: #ffffff; 
-            height: 40px; line-height: 40px; 
-            text-align: center; font-size: 16px; font-weight: bold;
-        }
+        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 13px; }
 
         /* 페이지 컨테이너 */
-        .page { width: 100%; padding: 10px; display: none; }
+        .page { width: 100%; padding: 5px; display: none; }
         .active { display: block !important; }
 
-        /* 버튼 크기 작게 조정 (px 고정) */
+        /* 버튼 크기 대폭 축소 (고정 px) */
         .btn {
-            display: block; width: 120px; height: 35px; line-height: 35px;
-            margin: 5px auto 10px auto; background: #3b4890; color: #ffffff;
-            text-align: center; text-decoration: none; font-size: 14px;
-            border-radius: 3px; border: none; cursor: pointer;
+            display: block; width: 90px; height: 30px; line-height: 30px;
+            margin: 5px 0; background: #3b4890; color: #fff;
+            text-align: center; text-decoration: none; font-size: 12px;
+            border: none; border-radius: 2px; cursor: pointer;
         }
-        .btn-gray { background: #777777; width: 80px; display: inline-block; margin: 5px 2px; }
-        .btn-red { background: #c62828; width: 80px; display: inline-block; margin: 5px 2px; }
+        .btn-gray { background: #666; width: 60px; display: inline-block; margin-right: 5px; }
+        .btn-red { background: #c00; width: 60px; display: inline-block; }
 
-        /* 목록 영역 */
-        .list-box { border-top: 1px solid #cccccc; margin-top: 10px; width: 100%; }
+        /* 목록 스타일: 글자가 삐져나가지 않게 */
+        .list-box { border-top: 1px solid #ccc; margin-top: 5px; width: 100%; }
         .list-item {
-            display: block; width: 100%; padding: 10px;
-            border-bottom: 1px solid #eeeeee; text-decoration: none; color: #000000;
-            font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            display: block; width: 100%; padding: 8px 5px;
+            border-bottom: 1px solid #eee; text-decoration: none; color: #000;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         /* 입력창 */
         .input-box {
-            width: 100%; padding: 8px; font-size: 14px;
-            border: 1px solid #cccccc; margin-bottom: 8px;
+            width: 100%; padding: 5px; font-size: 13px;
+            border: 1px solid #ccc; margin-bottom: 5px;
         }
-        textarea.input-box { height: 120px; }
+        textarea.input-box { height: 100px; }
 
         /* 본문 보기 */
-        .v-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #3b4890; padding-bottom: 5px; }
-        .v-content { font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+        .v-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #3b4890; }
+        .v-content { font-size: 13px; line-height: 1.4; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-
-<div class="header">자유게시판</div>
 
 <div id="listPage" class="page active">
     <button class="btn" onclick="goWrite()">새 글 쓰 기</button>
@@ -62,95 +52,70 @@
 <div id="writePage" class="page">
     <input type="text" id="inpTitle" class="input-box" placeholder="제목">
     <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
-    <div style="text-align:center;">
-        <button class="btn btn-gray" onclick="saveData()">저장</button>
-        <button class="btn btn-gray" onclick="goHome()">취소</button>
-    </div>
+    <button class="btn btn-gray" onclick="saveData()">저장</button>
+    <button class="btn btn-gray" onclick="goHome()">취소</button>
 </div>
 
 <div id="viewPage" class="page">
     <div id="viewContent"></div>
-    <div style="text-align:center; margin-top:10px;">
+    <div style="margin-top:10px;">
         <button class="btn btn-gray" onclick="goHome()">목록</button>
         <button id="delBtn" class="btn btn-red">삭제</button>
     </div>
 </div>
 
 <script>
-    var KEY = "lg_board_final";
+    var KEY = "lg_mini_db";
 
-    // 페이지 전환 함수 (가장 단순한 방식)
     function showPage(id) {
         document.getElementById('listPage').style.display = 'none';
         document.getElementById('writePage').style.display = 'none';
         document.getElementById('viewPage').style.display = 'none';
         document.getElementById(id).style.display = 'block';
-        window.scrollTo(0,0);
     }
 
-    function goHome() {
-        renderList();
-        showPage('listPage');
-    }
-
-    function goWrite() {
-        document.getElementById('inpTitle').value = "";
-        document.getElementById('inpContent').value = "";
-        showPage('writePage');
-    }
-
-    // 데이터 가져오기
     function getPosts() {
         var d = localStorage.getItem(KEY);
         return d ? JSON.parse(d) : [];
     }
 
-    // 목록 그리기
     function renderList() {
         var posts = getPosts();
         var container = document.getElementById('listContent');
         container.innerHTML = "";
 
         if(posts.length === 0) {
-            container.innerHTML = "<p style='text-align:center; padding:20px; color:#888; font-size:12px;'>글이 없습니다.</p>";
+            container.innerHTML = "<div style='padding:10px; color:#888;'>글 없음</div>";
             return;
         }
 
-        // 최신순 정렬
         posts.sort(function(a, b) { return b.id - a.id; });
 
         for(var i=0; i<posts.length; i++) {
-            (function() {
-                var p = posts[i];
-                var a = document.createElement('div');
-                a.className = 'list-item';
-                a.innerText = p.title;
-                a.onclick = function() { loadView(p.id); };
-                container.appendChild(a);
-            }());
+            (function(p) {
+                var d = document.createElement('div');
+                d.className = 'list-item';
+                d.innerText = p.title;
+                d.onclick = function() { loadView(p.id); };
+                container.appendChild(d);
+            })(posts[i]);
         }
     }
 
-    // 저장
     function saveData() {
         var t = document.getElementById('inpTitle').value;
         var c = document.getElementById('inpContent').value;
-        if(!t.trim()) { alert("제목 입력!"); return; }
+        if(!t.trim()) return;
 
         var posts = getPosts();
         posts.push({ id: Date.now(), title: t, content: c });
         localStorage.setItem(KEY, JSON.stringify(posts));
-        
         goHome();
     }
 
-    // 본문 보기
     function loadView(id) {
         var posts = getPosts();
-        var p = null;
-        for(var i=0; i<posts.length; i++) {
-            if(posts[i].id === id) { p = posts[i]; break; }
-        }
+        var p = posts.filter(function(x) { return x.id === id; })[0];
         if(!p) return;
 
         document.getElementById('viewContent').innerHTML = 
@@ -159,10 +124,7 @@
         
         document.getElementById('delBtn').onclick = function() {
             if(confirm("삭제?")) {
-                var newPosts = [];
-                for(var j=0; j<posts.length; j++) {
-                    if(posts[j].id !== id) newPosts.push(posts[j]);
-                }
+                var newPosts = posts.filter(function(x) { return x.id !== id; });
                 localStorage.setItem(KEY, JSON.stringify(newPosts));
                 goHome();
             }
@@ -170,10 +132,10 @@
         showPage('viewPage');
     }
 
-    // 시작하자마자 목록 그리기
-    window.onload = function() {
-        renderList();
-    };
+    function goHome() { renderList(); showPage('listPage'); }
+    function goWrite() { showPage('writePage'); document.getElementById('inpTitle').value=""; document.getElementById('inpContent').value=""; }
+
+    window.onload = renderList;
 </script>
 
 </body>
