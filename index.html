@@ -2,174 +2,177 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>폴더폰 게시판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>게시판</title>
     <style>
-        /* 화면 전체 사용 및 여백 제거 */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; font-family: sans-serif; }
+        /* 화면 초기화 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #ffffff; font-family: sans-serif; width: 100%; overflow-x: hidden; }
 
-        /* 상단 바 */
-        .header { background: #3b4890; color: #fff; padding: 12px; text-align: center; font-size: 16px; font-weight: bold; position: sticky; top: 0; }
+        /* 상단 바 - 무조건 보이게 높이 고정 */
+        .header { 
+            background: #3b4890; color: #ffffff; 
+            height: 40px; line-height: 40px; 
+            text-align: center; font-size: 16px; font-weight: bold;
+        }
 
-        /* 페이지 전환 (CSS 기반) */
-        .page { display: none; width: 100%; padding: 10px; background: #fff; }
-        #listPage:target, #writePage:target, #viewPage:target { display: block; }
-        /* 초기 접속 시 아무 해시가 없으면 목록 표시 */
-        .page:first-of-type { display: block; }
+        /* 페이지 컨테이너 */
+        .page { width: 100%; padding: 10px; display: none; }
+        .active { display: block !important; }
 
-        /* 적당한 크기의 버튼 */
+        /* 버튼 크기 작게 조정 (px 고정) */
         .btn {
-            display: block; width: 100%; padding: 12px; margin-bottom: 8px;
-            background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 15px; font-weight: bold;
-            border: 1px solid #283593; border-radius: 4px;
+            display: block; width: 120px; height: 35px; line-height: 35px;
+            margin: 5px auto 10px auto; background: #3b4890; color: #ffffff;
+            text-align: center; text-decoration: none; font-size: 14px;
+            border-radius: 3px; border: none; cursor: pointer;
         }
-        .btn-gray { background: #777; border-color: #555; }
-        .btn-red { background: #c62828; border-color: #b71c1c; }
+        .btn-gray { background: #777777; width: 80px; display: inline-block; margin: 5px 2px; }
+        .btn-red { background: #c62828; width: 80px; display: inline-block; margin: 5px 2px; }
 
-        /* 목록 디자인 */
-        .list-container { border-top: 1px solid #ddd; margin-top: 10px; }
+        /* 목록 영역 */
+        .list-box { border-top: 1px solid #cccccc; margin-top: 10px; width: 100%; }
         .list-item {
-            display: block; width: 100%; padding: 12px 10px;
-            border-bottom: 1px solid #eee; text-decoration: none; color: #000;
+            display: block; width: 100%; padding: 10px;
+            border-bottom: 1px solid #eeeeee; text-decoration: none; color: #000000;
+            font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .list-item:active { background: #f0f0f0; }
-        .list-title { font-size: 15px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* 입력창 */
         .input-box {
-            width: 100%; padding: 10px; font-size: 15px;
-            border: 1px solid #ccc; margin-bottom: 10px; border-radius: 0;
-            display: block;
+            width: 100%; padding: 8px; font-size: 14px;
+            border: 1px solid #cccccc; margin-bottom: 8px;
         }
-        textarea.input-box { height: 150px; }
+        textarea.input-box { height: 120px; }
 
         /* 본문 보기 */
-        .view-t { font-size: 18px; font-weight: bold; margin-bottom: 8px; border-bottom: 2px solid #3b4890; padding-bottom: 8px; }
-        .view-c { font-size: 15px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+        .v-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #3b4890; padding-bottom: 5px; }
+        .v-content { font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div class="header">자유게시판</div>
 
-<div id="listPage" class="page">
-    <a href="#writePage" class="btn">글 쓰 기</a>
-    <div id="listContent" class="list-container">
-        </div>
+<div id="listPage" class="page active">
+    <button class="btn" onclick="goWrite()">새 글 쓰 기</button>
+    <div id="listContent" class="list-box"></div>
 </div>
 
 <div id="writePage" class="page">
     <input type="text" id="inpTitle" class="input-box" placeholder="제목">
     <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
-    <a href="#listPage" class="btn" onclick="saveData()">저장 완료</a>
-    <a href="#listPage" class="btn btn-gray">취소</a>
+    <div style="text-align:center;">
+        <button class="btn btn-gray" onclick="saveData()">저장</button>
+        <button class="btn btn-gray" onclick="goHome()">취소</button>
+    </div>
 </div>
 
 <div id="viewPage" class="page">
     <div id="viewContent"></div>
-    <div style="margin-top:15px;">
-        <a href="#listPage" class="btn btn-gray">목록으로</a>
-        <a href="#listPage" id="delBtn" class="btn btn-red">삭제</a>
+    <div style="text-align:center; margin-top:10px;">
+        <button class="btn btn-gray" onclick="goHome()">목록</button>
+        <button id="delBtn" class="btn btn-red">삭제</button>
     </div>
 </div>
 
 <script>
-    const KEY = "lg_folder_db";
+    var KEY = "lg_board_final";
 
-    // 데이터 가져오기 (에러 방지 처리)
+    // 페이지 전환 함수 (가장 단순한 방식)
+    function showPage(id) {
+        document.getElementById('listPage').style.display = 'none';
+        document.getElementById('writePage').style.display = 'none';
+        document.getElementById('viewPage').style.display = 'none';
+        document.getElementById(id).style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function goHome() {
+        renderList();
+        showPage('listPage');
+    }
+
+    function goWrite() {
+        document.getElementById('inpTitle').value = "";
+        document.getElementById('inpContent').value = "";
+        showPage('writePage');
+    }
+
+    // 데이터 가져오기
     function getPosts() {
-        try {
-            const d = localStorage.getItem(KEY);
-            return d ? JSON.parse(d) : [];
-        } catch(e) {
-            return [];
-        }
+        var d = localStorage.getItem(KEY);
+        return d ? JSON.parse(d) : [];
     }
 
     // 목록 그리기
     function renderList() {
-        const posts = getPosts();
-        const container = document.getElementById('listContent');
-        if (!container) return;
-        
-        container.innerHTML = '';
+        var posts = getPosts();
+        var container = document.getElementById('listContent');
+        container.innerHTML = "";
 
         if(posts.length === 0) {
-            container.innerHTML = '<div style="padding:30px; text-align:center; color:#888; font-size:14px;">글이 없습니다.</div>';
+            container.innerHTML = "<p style='text-align:center; padding:20px; color:#888; font-size:12px;'>글이 없습니다.</p>";
             return;
         }
 
-        // 최신글이 위로 오게 정렬하여 표시
-        const sortedPosts = posts.sort((a, b) => b.id - a.id);
-        
-        for(let i=0; i < sortedPosts.length; i++) {
-            const p = sortedPosts[i];
-            const a = document.createElement('a');
-            a.className = 'list-item';
-            a.href = "#viewPage";
-            // 클로저 문제 방지를 위한 즉시 실행 함수 처리
-            a.onclick = (function(id) {
-                return function() { loadView(id); };
-            })(p.id);
-            a.innerHTML = `<span class="list-title">${p.title}</span>`;
-            container.appendChild(a);
+        // 최신순 정렬
+        posts.sort(function(a, b) { return b.id - a.id; });
+
+        for(var i=0; i<posts.length; i++) {
+            (function() {
+                var p = posts[i];
+                var a = document.createElement('div');
+                a.className = 'list-item';
+                a.innerText = p.title;
+                a.onclick = function() { loadView(p.id); };
+                container.appendChild(a);
+            }());
         }
     }
 
-    // 데이터 저장
+    // 저장
     function saveData() {
-        const t = document.getElementById('inpTitle').value;
-        const c = document.getElementById('inpContent').value;
-        if(!t.trim()) return;
+        var t = document.getElementById('inpTitle').value;
+        var c = document.getElementById('inpContent').value;
+        if(!t.trim()) { alert("제목 입력!"); return; }
 
-        const posts = getPosts();
+        var posts = getPosts();
         posts.push({ id: Date.now(), title: t, content: c });
         localStorage.setItem(KEY, JSON.stringify(posts));
-
-        // 입력창 초기화
-        document.getElementById('inpTitle').value = '';
-        document.getElementById('inpContent').value = '';
         
-        // 목록 갱신
-        renderList();
+        goHome();
     }
 
     // 본문 보기
     function loadView(id) {
-        const posts = getPosts();
-        const p = posts.find(item => item.id === id);
+        var posts = getPosts();
+        var p = null;
+        for(var i=0; i<posts.length; i++) {
+            if(posts[i].id === id) { p = posts[i]; break; }
+        }
         if(!p) return;
 
-        document.getElementById('viewContent').innerHTML = `
-            <div class="view-t">${p.title}</div>
-            <div class="view-c">${p.content}</div>
-        `;
+        document.getElementById('viewContent').innerHTML = 
+            "<div class='v-title'>" + p.title + "</div>" +
+            "<div class='v-content'>" + p.content + "</div>";
         
         document.getElementById('delBtn').onclick = function() {
-            if(confirm("삭제하시겠습니까?")) {
-                const newPosts = getPosts().filter(item => item.id !== id);
+            if(confirm("삭제?")) {
+                var newPosts = [];
+                for(var j=0; j<posts.length; j++) {
+                    if(posts[j].id !== id) newPosts.push(posts[j]);
+                }
                 localStorage.setItem(KEY, JSON.stringify(newPosts));
-                renderList();
+                goHome();
             }
         };
+        showPage('viewPage');
     }
 
-    // 주소(해시) 변경 감지 시 목록 갱신
-    window.addEventListener('hashchange', function() {
-        if(location.hash === "" || location.hash === "#listPage") {
-            renderList();
-        }
-    });
-
-    // 초기 실행
+    // 시작하자마자 목록 그리기
     window.onload = function() {
         renderList();
-        // 초기 접속 시 목록 페이지로 강제 이동 (해시가 없을 경우)
-        if(!location.hash) {
-            location.hash = "#listPage";
-        }
     };
 </script>
 
