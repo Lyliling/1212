@@ -4,104 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* 초기화 및 폰트 설정 */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 16px; overflow-x: hidden; color: #333; }
+        /* 화면 초기화 */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 16px; overflow-x: hidden; }
 
-        /* 페이지 컨테이너 */
-        .page { width: 100%; padding: 12px; display: none; min-height: 100vh; position: relative; }
-        .active { display: block !important; }
+        /* 페이지 전환용 (ID 앵커 방식) */
+        .page { display: none; width: 100%; min-height: 100vh; padding: 15px; background: #fff; }
+        /* URL 뒤에 #ID가 붙으면 해당 화면을 보여줌 */
+        #listPage:target, #writePage:target, #viewPage:target { display: block !important; }
+        /* 아무 해시가 없을 때 기본 목록 표시 */
+        .page:first-of-type { display: block; }
+        #listPage:target ~ #default { display: none; }
 
-        /* 목록 상단 영역 */
-        .list-header { width: 100%; height: 50px; border-bottom: 1px solid #ddd; margin-bottom: 10px; }
-        
-        /* 버튼 스타일 (시원한 크기와 가독성) */
+        /* 버튼 스타일 (오른쪽 배치) */
+        .btn-box { width: 100%; height: 45px; margin-bottom: 10px; position: relative; }
         .btn {
-            display: inline-block; width: 95px; height: 38px; line-height: 38px;
+            display: block; width: 100px; height: 38px; line-height: 38px;
             background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 14px; border: none; 
-            border-radius: 4px; cursor: pointer; font-weight: bold;
+            text-decoration: none; font-size: 14px; font-weight: bold;
+            border-radius: 4px; position: absolute; right: 0; top: 0;
         }
-        .btn-write { float: right; margin-top: 5px; } /* 새글쓰기 우측 상단 */
-        .btn-gray { background: #666; width: 80px; }
-        .btn-red { background: #c00; width: 80px; }
-        .btn-sub { background: #eee; color: #333; border: 1px solid #ccc; width: 90px; height: 30px; line-height: 30px; font-size: 12px; }
+        .btn-gray { background: #666; right: 80px; width: 70px; }
+        .btn-red { background: #c00; right: 0; width: 70px; }
+        .btn-list { background: #777; right: 155px; width: 70px; }
 
-        /* 본문 하단 버튼 (우측 하단 고정) */
-        .bottom-btns { 
-            position: absolute; bottom: 30px; right: 15px; 
-            display: flex; gap: 8px; 
-        }
-
-        /* 목록 디자인 */
-        .list-box { width: 100%; clear: both; }
+        /* 목록 아이템 */
         .list-item {
-            display: block; width: 100%; padding: 18px 8px;
-            border-bottom: 1px solid #f0f0f0; text-decoration: none; color: #000;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            font-size: 18px; /* 목록 폰트 크게 */
+            display: block; width: 100%; padding: 18px 5px;
+            border-bottom: 1px solid #eee; text-decoration: none; color: #000;
+            font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .list-item:active { background: #f9f9f9; }
 
-        /* 입력창 디자인 */
-        .input-box {
-            width: 100%; padding: 12px; font-size: 16px;
-            border: 1px solid #bbb; margin-bottom: 12px; border-radius: 2px;
-        }
+        /* 입력창 */
+        .input-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; margin-bottom: 10px; display: block; }
         textarea.input-box { height: 160px; }
 
-        /* 본문 읽기 디자인 */
-        .v-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #3b4890; padding-bottom: 10px; color: #000; }
-        .v-content { font-size: 17px; line-height: 1.7; white-space: pre-wrap; padding-bottom: 100px; color: #222; }
-
-        /* 백업/데이터 추출 영역 */
-        #backupArea { margin-top: 20px; padding: 10px; background: #f9f9f9; border: 1px dashed #ccc; display: none; }
+        /* 본문 내용 */
+        .v-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 10px; }
+        .v-content { font-size: 17px; line-height: 1.6; white-space: pre-wrap; padding-bottom: 80px; }
+        
+        /* 하단 고정 버튼 바 */
+        .bottom-bar { position: fixed; bottom: 15px; right: 15px; display: flex; gap: 5px; }
     </style>
 </head>
 <body>
 
-<div id="listPage" class="page active">
-    <div class="list-header">
-        <button class="btn btn-write" onclick="goWrite()">새 글 쓰 기</button>
-        <button class="btn btn-sub" style="margin-top:9px;" onclick="toggleBackup()">데이터 추출</button>
+<div id="listPage" class="page">
+    <div class="btn-box">
+        <a href="#writePage" class="btn">새 글 쓰 기</a>
     </div>
-    
-    <div id="backupArea">
-        <p style="font-size:11px; margin-bottom:5px;">아래 텍스트를 복사해서 메모장에 보관하세요:</p>
-        <textarea id="backupText" style="width:100%; height:100px; font-size:10px;"></textarea>
-    </div>
-
-    <div id="listContent" class="list-box"></div>
+    <div id="listContent"></div>
 </div>
 
 <div id="writePage" class="page">
     <input type="text" id="inpTitle" class="input-box" placeholder="제목">
-    <textarea id="inpContent" class="input-box" placeholder="내용을 입력하세요"></textarea>
-    <div style="text-align: right;">
-        <button class="btn btn-gray" onclick="saveData()">저장</button>
-        <button class="btn btn-gray" onclick="goHome()">취소</button>
+    <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
+    <div class="btn-box">
+        <a href="#listPage" class="btn" onclick="saveData()">저장 완료</a>
+        <a href="#listPage" class="btn btn-gray">취소</a>
     </div>
 </div>
 
 <div id="viewPage" class="page">
     <div id="viewContent"></div>
-    <div class="bottom-btns">
-        <button class="btn btn-gray" onclick="goHome()">목록</button>
-        <button id="delBtn" class="btn btn-red">삭제</button>
+    <div class="bottom-bar">
+        <a href="#listPage" class="btn btn-list">목록</a>
+        <a href="#listPage" id="delBtn" class="btn btn-red">삭제</a>
     </div>
 </div>
 
 <script>
-    // 영구 저장 키 고정
     var KEY = "folder_board_permanent";
-
-    function showPage(id) {
-        document.getElementById('listPage').style.display = 'none';
-        document.getElementById('writePage').style.display = 'none';
-        document.getElementById('viewPage').style.display = 'none';
-        document.getElementById(id).style.display = 'block';
-        window.scrollTo(0,0);
-    }
 
     function getPosts() {
         try {
@@ -113,23 +86,24 @@
     function renderList() {
         var posts = getPosts();
         var container = document.getElementById('listContent');
+        if(!container) return;
         container.innerHTML = "";
 
         if(posts.length === 0) {
-            container.innerHTML = "<div style='padding:50px 0; color:#999; text-align:center;'>작성된 글이 없습니다.</div>";
+            container.innerHTML = "<div style='padding:40px; text-align:center; color:#999;'>글이 없습니다.</div>";
             return;
         }
 
-        // 최신글 순서
         posts.sort(function(a, b) { return b.id - a.id; });
 
         for(var i=0; i<posts.length; i++) {
             (function(p) {
-                var d = document.createElement('div');
-                d.className = 'list-item';
-                d.innerText = p.title;
-                d.onclick = function() { loadView(p.id); };
-                container.appendChild(d);
+                var a = document.createElement('a');
+                a.className = 'list-item';
+                a.href = "#viewPage"; // 앵커 이동 우선
+                a.onclick = function() { loadView(p.id); };
+                a.innerText = p.title;
+                container.appendChild(a);
             })(posts[i]);
         }
     }
@@ -137,13 +111,15 @@
     function saveData() {
         var t = document.getElementById('inpTitle').value;
         var c = document.getElementById('inpContent').value;
-        if(!t.trim()) { alert("제목을 입력해주세요."); return; }
+        if(!t.trim()) return;
 
         var posts = getPosts();
         posts.push({ id: Date.now(), title: t, content: c });
         localStorage.setItem(KEY, JSON.stringify(posts));
         
-        goHome();
+        document.getElementById('inpTitle').value = "";
+        document.getElementById('inpContent').value = "";
+        renderList();
     }
 
     function loadView(id) {
@@ -156,40 +132,21 @@
             "<div class='v-content'>" + p.content + "</div>";
         
         document.getElementById('delBtn').onclick = function() {
-            if(confirm("이 글을 삭제하시겠습니까?")) {
+            if(confirm("삭제하시겠습니까?")) {
                 var newPosts = posts.filter(function(x) { return x.id !== id; });
                 localStorage.setItem(KEY, JSON.stringify(newPosts));
-                goHome();
+                renderList();
             }
         };
-        showPage('viewPage');
     }
 
-    function toggleBackup() {
-        var area = document.getElementById('backupArea');
-        if(area.style.display === 'block') {
-            area.style.display = 'none';
-        } else {
-            area.style.display = 'block';
-            document.getElementById('backupText').value = localStorage.getItem(KEY);
-        }
-    }
+    // 주소창의 #ID가 바뀔 때마다 리스트를 새로 그림
+    window.onhashchange = renderList;
 
-    function goHome() { 
-        document.getElementById('backupArea').style.display = 'none';
-        renderList(); 
-        showPage('listPage'); 
-    }
-    
-    function goWrite() { 
-        showPage('writePage'); 
-        document.getElementById('inpTitle').value=""; 
-        document.getElementById('inpContent').value=""; 
-    }
-
-    // 첫 실행
     window.onload = function() {
         renderList();
+        // 초기 접속 시 아무것도 없으면 목록으로 강제 이동
+        if(!location.hash) location.hash = "#listPage";
     };
 </script>
 
