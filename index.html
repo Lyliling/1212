@@ -4,54 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* 화면 초기화 */
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 16px; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #fff; font-family: sans-serif; width: 100%; overflow-x: hidden; }
 
-        /* 페이지 전환용 (ID 앵커 방식) */
-        .page { display: none; width: 100%; min-height: 100vh; padding: 15px; background: #fff; }
-        /* URL 뒤에 #ID가 붙으면 해당 화면을 보여줌 */
-        #listPage:target, #writePage:target, #viewPage:target { display: block !important; }
-        /* 아무 해시가 없을 때 기본 목록 표시 */
-        .page:first-of-type { display: block; }
-        #listPage:target ~ #default { display: none; }
+        /* 페이지 전환: 무조건 꽉 차게 */
+        .page { width: 100%; min-height: 100vh; padding: 12px; display: none; background: #fff; }
+        .active { display: block !important; }
 
-        /* 버튼 스타일 (오른쪽 배치) */
-        .btn-box { width: 100%; height: 45px; margin-bottom: 10px; position: relative; }
+        /* 버튼: 적당한 크기, 우측 배치 */
+        .btn-row { width: 100%; height: 40px; margin-bottom: 10px; }
         .btn {
-            display: block; width: 100px; height: 38px; line-height: 38px;
+            float: right; width: 90px; height: 35px; line-height: 35px;
             background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 14px; font-weight: bold;
-            border-radius: 4px; position: absolute; right: 0; top: 0;
+            text-decoration: none; font-size: 14px; border: none; border-radius: 3px;
         }
-        .btn-gray { background: #666; right: 80px; width: 70px; }
-        .btn-red { background: #c00; right: 0; width: 70px; }
-        .btn-list { background: #777; right: 155px; width: 70px; }
+        .btn-sub { background: #666; width: 70px; margin-right: 5px; }
+        .btn-del { background: #c00; width: 70px; }
 
-        /* 목록 아이템 */
+        /* 목록: 폰트 크게 */
         .list-item {
-            display: block; width: 100%; padding: 18px 5px;
+            display: block; width: 100%; padding: 15px 5px;
             border-bottom: 1px solid #eee; text-decoration: none; color: #000;
             font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* 입력창 */
-        .input-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; margin-bottom: 10px; display: block; }
-        textarea.input-box { height: 160px; }
+        /* 입력창: 화면 맨 위부터 시작 */
+        .input-box { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; margin-bottom: 10px; }
+        textarea.input-box { height: 150px; }
 
-        /* 본문 내용 */
+        /* 본문 보기 */
         .v-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 10px; }
         .v-content { font-size: 17px; line-height: 1.6; white-space: pre-wrap; padding-bottom: 80px; }
         
-        /* 하단 고정 버튼 바 */
-        .bottom-bar { position: fixed; bottom: 15px; right: 15px; display: flex; gap: 5px; }
+        /* 하단 버튼 바 */
+        .bottom-bar { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 5px; }
     </style>
 </head>
 <body>
 
-<div id="listPage" class="page">
-    <div class="btn-box">
-        <a href="#writePage" class="btn">새 글 쓰 기</a>
+<div id="listPage" class="page active">
+    <div class="btn-row">
+        <button class="btn" onclick="goWrite()">새 글 쓰 기</button>
     </div>
     <div id="listContent"></div>
 </div>
@@ -59,55 +52,72 @@
 <div id="writePage" class="page">
     <input type="text" id="inpTitle" class="input-box" placeholder="제목">
     <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
-    <div class="btn-box">
-        <a href="#listPage" class="btn" onclick="saveData()">저장 완료</a>
-        <a href="#listPage" class="btn btn-gray">취소</a>
+    <div style="text-align: right;">
+        <button class="btn btn-sub" onclick="saveData()">저장</button>
+        <button class="btn btn-sub" onclick="goHome()">취소</button>
     </div>
 </div>
 
 <div id="viewPage" class="page">
     <div id="viewContent"></div>
     <div class="bottom-bar">
-        <a href="#listPage" class="btn btn-list">목록</a>
-        <a href="#listPage" id="delBtn" class="btn btn-red">삭제</a>
+        <button class="btn btn-sub" onclick="goHome()">목록</button>
+        <button id="delBtn" class="btn btn-del">삭제</button>
     </div>
 </div>
 
 <script>
-    var KEY = "folder_board_permanent";
+    // 저장 키 고정
+    var KEY = "folder_board_permanent_data";
 
+    // 화면 전환 (다른 화면은 완전히 숨김)
+    function showPage(id) {
+        var pages = document.getElementsByClassName('page');
+        for(var i=0; i<pages.length; i++) { pages[i].classList.remove('active'); }
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    // 데이터 읽기
     function getPosts() {
+        var data = localStorage.getItem(KEY);
         try {
-            var d = localStorage.getItem(KEY);
-            return d ? JSON.parse(d) : [];
+            return data ? JSON.parse(data) : [];
         } catch(e) { return []; }
     }
 
+    // 목록 렌더링 (최신순)
     function renderList() {
         var posts = getPosts();
         var container = document.getElementById('listContent');
-        if(!container) return;
         container.innerHTML = "";
-
+        
         if(posts.length === 0) {
-            container.innerHTML = "<div style='padding:40px; text-align:center; color:#999;'>글이 없습니다.</div>";
+            container.innerHTML = "<div style='text-align:center; padding:30px; color:#999;'>글이 없습니다.</div>";
             return;
         }
 
         posts.sort(function(a, b) { return b.id - a.id; });
 
         for(var i=0; i<posts.length; i++) {
-            (function(p) {
-                var a = document.createElement('a');
-                a.className = 'list-item';
-                a.href = "#viewPage"; // 앵커 이동 우선
-                a.onclick = function() { loadView(p.id); };
-                a.innerText = p.title;
-                container.appendChild(a);
+            (function(p){
+                var d = document.createElement('div');
+                d.className = 'list-item';
+                d.innerText = p.title;
+                d.onclick = function() { loadView(p.id); };
+                container.appendChild(d);
             })(posts[i]);
         }
     }
 
+    // 글쓰기 이동
+    function goWrite() {
+        document.getElementById('inpTitle').value = "";
+        document.getElementById('inpContent').value = "";
+        showPage('writePage');
+    }
+
+    // 저장 로직 (직접 localStorage에 쓰기)
     function saveData() {
         var t = document.getElementById('inpTitle').value;
         var c = document.getElementById('inpContent').value;
@@ -117,11 +127,16 @@
         posts.push({ id: Date.now(), title: t, content: c });
         localStorage.setItem(KEY, JSON.stringify(posts));
         
-        document.getElementById('inpTitle').value = "";
-        document.getElementById('inpContent').value = "";
-        renderList();
+        goHome();
     }
 
+    // 목록으로 가기
+    function goHome() {
+        renderList();
+        showPage('listPage');
+    }
+
+    // 본문 보기
     function loadView(id) {
         var posts = getPosts();
         var p = posts.filter(function(x) { return x.id === id; })[0];
@@ -132,23 +147,19 @@
             "<div class='v-content'>" + p.content + "</div>";
         
         document.getElementById('delBtn').onclick = function() {
-            if(confirm("삭제하시겠습니까?")) {
+            if(confirm("삭제할까요?")) {
                 var newPosts = posts.filter(function(x) { return x.id !== id; });
                 localStorage.setItem(KEY, JSON.stringify(newPosts));
-                renderList();
+                goHome();
             }
         };
+        showPage('viewPage');
     }
 
-    // 주소창의 #ID가 바뀔 때마다 리스트를 새로 그림
-    window.onhashchange = renderList;
-
+    // 초기 실행
     window.onload = function() {
         renderList();
-        // 초기 접속 시 아무것도 없으면 목록으로 강제 이동
-        if(!location.hash) location.hash = "#listPage";
     };
 </script>
-
 </body>
 </html>
