@@ -2,289 +2,170 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>폴더폰 게시판</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>단순 게시판</title>
     <style>
-        /* 기본 레이아웃: 회색 칸 없이 꽉 차게 */
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #ffffff; font-family: sans-serif; 
-        }
+        /* 폴더폰 화면 꽉 채우기 */
         * { box-sizing: border-box; }
-
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; font-family: sans-serif; }
+        
         /* 상단 바 */
-        .header { 
-            background: #3b4890; color: #ffffff; padding: 15px; 
-            display: flex; justify-content: space-between; align-items: center;
+        .header { background: #3b4890; color: #fff; padding: 15px; text-align: center; font-weight: bold; }
+
+        /* 목록 아이템 (클릭하기 매우 크게 제작) */
+        .item { 
+            display: block; width: 100%; padding: 20px 10px; 
+            border-bottom: 2px solid #eee; text-decoration: none; color: #000;
         }
-        .header h1 { font-size: 18px; margin: 0; }
+        .item:active { background: #ddd; }
+        .item-title { font-size: 18px; font-weight: bold; display: block; }
+        .item-date { font-size: 12px; color: #888; }
 
-        /* 탭 메뉴 */
-        .tabs { display: flex; background: #eeeeee; border-bottom: 2px solid #3b4890; }
-        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; cursor: pointer; }
-        .tab.active { background: #3b4890; color: #ffffff; font-weight: bold; }
+        /* 페이지 전환 */
+        .page { display: none; padding: 10px; }
+        .active { display: block; }
 
-        /* 게시판 목록 */
-        .list-item { 
-            display: flex; width: 100%; border-bottom: 1px solid #dddddd; 
-            padding: 15px 10px; text-decoration: none; color: #333;
-            align-items: center;
+        /* 입력창 (가장 표준적인 방식) */
+        input, textarea { 
+            width: 100%; display: block; margin-bottom: 10px; 
+            padding: 15px; font-size: 18px; border: 2px solid #ccc;
         }
-        .list-item:active { background: #f0f0f0; }
-        .list-num { width: 35px; font-size: 12px; color: #888; text-align: center; }
-        .list-title { flex: 1; font-size: 15px; padding: 0 5px; word-break: break-all; }
-        .list-date { width: 45px; font-size: 11px; color: #999; text-align: right; }
+        textarea { height: 150px; }
 
-        /* 상세보기 & 글쓰기 */
-        .view-panel { display: none; padding: 15px; }
-        .active-view { display: block !important; }
-
-        /* 입력창 최적화 (폴더폰 필수) */
-        input[type="text"], textarea { 
-            width: 100%; border: 1px solid #cccccc; padding: 12px; 
-            font-size: 16px; margin-bottom: 10px; border-radius: 0;
-            display: block;
-        }
-        textarea { height: 150px; resize: none; }
-
-        /* 버튼 크기 키움 (클릭 용이) */
+        /* 버튼 (손가락/마우스 클릭용 대형 버튼) */
         .btn { 
-            display: block; width: 100%; padding: 15px; 
-            text-align: center; border: none; font-size: 16px; 
-            font-weight: bold; cursor: pointer; margin-bottom: 10px;
+            display: block; width: 100%; padding: 20px; 
+            font-size: 20px; font-weight: bold; text-align: center;
+            border: none; margin-bottom: 10px; cursor: pointer;
         }
-        .btn-blue { background: #3b4890; color: #ffffff; }
-        .btn-gray { background: #777777; color: #ffffff; }
-        .btn-red { background: #d9534f; color: #ffffff; }
+        .btn-blue { background: #3b4890; color: #fff; }
+        .btn-gray { background: #888; color: #fff; }
+        .btn-red { background: #cc0000; color: #fff; }
 
-        /* 상세 내용 */
-        .detail-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .detail-info { font-size: 12px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .detail-body { font-size: 16px; line-height: 1.6; word-break: break-all; }
-
-        #nickLayer { 
-            display: none; padding: 20px; background: #ffffff; 
-            border: 2px solid #3b4890; position: fixed; top: 50px; left: 10px; right: 10px; z-index: 1000;
-        }
+        /* 본문 내용 */
+        .view-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #3b4890; padding-bottom: 10px; }
+        .view-body { font-size: 18px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div class="header">
-        <h1 onclick="location.reload()">게시판</h1>
-        <div onclick="toggleNick()" style="padding: 5px; background: #505ca0; border-radius: 3px; font-size: 12px;">설정</div>
-    </div>
+<div class="header" onclick="goList()">자유게시판</div>
 
-    <div id="nickLayer">
-        <p style="margin:0 0 10px 0; font-size:14px;">닉네임 설정</p>
-        <input type="text" id="nickInput" onchange="saveNick()">
-        <button class="btn btn-gray" onclick="exportData()">데이터 백업</button>
-        <button class="btn btn-red" onclick="clearData()">전체 삭제</button>
-        <button class="btn btn-blue" onclick="toggleNick()">닫기</button>
-    </div>
+<div id="listPage" class="page active">
+    <button class="btn btn-blue" onclick="goWrite()">새 글 쓰 기</button>
+    <div id="listContent"></div>
+</div>
 
-    <div id="listPage" class="active-view">
-        <div class="tabs">
-            <div id="tabAll" class="tab active" onclick="changeTab('전체')">전체글</div>
-            <div id="tabCheck" class="tab" onclick="changeTab('체크')">체크함</div>
-        </div>
-        <div id="listContainer"></div>
-        <div style="padding: 15px;">
-            <button class="btn btn-blue" onclick="goWrite()">새 글 쓰 기</button>
-        </div>
-    </div>
+<div id="writePage" class="page">
+    <input type="text" id="inpTitle" placeholder="제목을 입력">
+    <textarea id="inpContent" placeholder="내용을 입력"></textarea>
+    <button class="btn btn-blue" onclick="saveData()">저장 완료</button>
+    <button class="btn btn-gray" onclick="goList()">취소</button>
+</div>
 
-    <div id="detailPage" class="view-panel">
-        <div id="detailContent"></div>
-        <div style="margin-top: 20px;">
-            <button class="btn btn-blue" onclick="goEdit()">수정하기</button>
-            <button class="btn btn-gray" onclick="goHome()">목록으로</button>
-            <button class="btn btn-red" onclick="deletePost()">삭제하기</button>
-        </div>
-    </div>
-
-    <div id="writePage" class="view-panel">
-        <input type="text" id="wTitle" placeholder="제목">
-        <textarea id="wContent" placeholder="내용을 입력하세요"></textarea>
-        <div style="padding: 10px; border: 1px dashed #ccc; margin-bottom: 10px;">
-            <label style="font-size:12px;">사진 첨부:</label>
-            <input type="file" id="wFile" accept="image/*" multiple onchange="handleFiles(this)">
-            <div id="fileStatus" style="font-size:11px; color:#666; margin-top:5px;"></div>
-        </div>
-        <button class="btn btn-blue" onclick="savePost()">등록 완료</button>
-        <button class="btn btn-gray" onclick="goHome()">취소</button>
+<div id="viewPage" class="page">
+    <div id="viewContent"></div>
+    <div style="margin-top:20px;">
+        <button class="btn btn-gray" onclick="goList()">목록으로</button>
+        <button id="delBtn" class="btn btn-red">이 글 삭제</button>
     </div>
 </div>
 
 <script>
-    let db;
-    let currentTab = '전체';
-    let currentId = null;
-    let tempImages = [];
+    // 데이터 저장 키
+    const STORAGE_KEY = "simple_board_data";
 
-    // DB 초기화
-    const request = indexedDB.open("FolderBoard", 1);
-    request.onupgradeneeded = (e) => {
-        e.target.result.createObjectStore("posts", { keyPath: "id" });
-    };
-    request.onsuccess = (e) => {
-        db = e.target.result;
-        renderList();
-    };
+    // 1. 목록 가져오기
+    function getPosts() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
 
-    // 화면 전환 함수
-    function showPage(pageId) {
-        document.getElementById('listPage').style.display = 'none';
-        document.getElementById('detailPage').style.display = 'none';
-        document.getElementById('writePage').style.display = 'none';
-        document.getElementById(pageId).style.display = 'block';
+    // 2. 목록 화면 그리기
+    function renderList() {
+        const posts = getPosts();
+        const container = document.getElementById('listContent');
+        container.innerHTML = '';
+        
+        if(posts.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:20px; color:#888;">작성된 글이 없습니다.</p>';
+            return;
+        }
+
+        posts.sort((a, b) => b.id - a.id).forEach(post => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.onclick = () => goView(post.id);
+            div.innerHTML = `
+                <span class="item-title">${post.title}</span>
+                <span class="item-date">${post.date}</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 3. 글 저장하기
+    function saveData() {
+        const title = document.getElementById('inpTitle').value;
+        const content = document.getElementById('inpContent').value;
+
+        if(!title.trim()) { alert("제목을 써주세요"); return; }
+
+        const posts = getPosts();
+        const newPost = {
+            id: Date.now(),
+            title: title,
+            content: content,
+            date: new Date().toLocaleDateString()
+        };
+
+        posts.push(newPost);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        
+        document.getElementById('inpTitle').value = '';
+        document.getElementById('inpContent').value = '';
+        goList();
+    }
+
+    // 4. 본문 보기
+    function goView(id) {
+        const posts = getPosts();
+        const post = posts.find(p => p.id === id);
+        if(!post) return;
+
+        const container = document.getElementById('viewContent');
+        container.innerHTML = `
+            <div class="view-title">${post.title}</div>
+            <div class="view-body">${post.content}</div>
+        `;
+
+        document.getElementById('delBtn').onclick = () => deletePost(id);
+
+        showPage('viewPage');
+    }
+
+    // 5. 글 삭제
+    function deletePost(id) {
+        if(!confirm("정말 삭제할까요?")) return;
+        let posts = getPosts();
+        posts = posts.filter(p => p.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        goList();
+    }
+
+    // 화면 전환 유틸리티
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
         window.scrollTo(0,0);
     }
 
-    // 목록 렌더링
-    function renderList() {
-        const container = document.getElementById('listContainer');
-        container.innerHTML = '';
-        const transaction = db.transaction(["posts"], "readonly");
-        const store = transaction.objectStore("posts");
-        store.getAll().onsuccess = (e) => {
-            let posts = e.target.result.sort((a,b) => b.id - a.id);
-            if(currentTab === '체크') posts = posts.filter(p => p.checked);
+    function goList() { showPage('listPage'); renderList(); }
+    function goWrite() { showPage('writePage'); }
 
-            posts.forEach((p, index) => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.onclick = () => goDetail(p.id);
-                item.innerHTML = `
-                    <div class="list-num">${posts.length - index}</div>
-                    <div class="list-title">${p.title}</div>
-                    <div class="list-date">${p.date.slice(5,10)}</div>
-                `;
-                container.appendChild(item);
-            });
-        };
-    }
-
-    function changeTab(tab) {
-        currentTab = tab;
-        document.getElementById('tabAll').className = tab === '전체' ? 'tab active' : 'tab';
-        document.getElementById('tabCheck').className = tab === '체크' ? 'tab active' : 'tab';
-        renderList();
-    }
-
-    // 글쓰기 이동
-    function goWrite() {
-        currentId = null;
-        tempImages = [];
-        document.getElementById('wTitle').value = '';
-        document.getElementById('wContent').value = '';
-        document.getElementById('fileStatus').innerText = '';
-        showPage('writePage');
-    }
-
-    // 상세 보기
-    function goDetail(id) {
-        currentId = id;
-        const transaction = db.transaction(["posts"], "readonly");
-        transaction.objectStore("posts").get(id).onsuccess = (e) => {
-            const p = e.target.result;
-            let imgHtml = '';
-            if(p.images) p.images.forEach(img => imgHtml += `<img src="${img}" style="width:100%; margin-bottom:10px;">`);
-            
-            const checkTxt = p.checked ? "☑ 체크됨" : "☐ 체크하기";
-            document.getElementById('detailContent').innerHTML = `
-                <div class="detail-title">${p.title}</div>
-                <div class="detail-info">
-                    ${p.author} | ${p.date.slice(5,16).replace('T',' ')}
-                    <span onclick="toggleCheck(${p.id})" style="float:right; color:#3b4890; font-weight:bold;">${checkTxt}</span>
-                </div>
-                <div class="detail-body">${imgHtml}${p.content.replace(/\n/g, '<br>')}</div>
-            `;
-            showPage('detailPage');
-        };
-    }
-
-    // 저장
-    function savePost() {
-        const title = document.getElementById('wTitle').value.trim();
-        const content = document.getElementById('wContent').value;
-        if(!title) { alert("제목을 입력하세요"); return; }
-
-        const postData = {
-            id: currentId || Date.now(),
-            title: title,
-            content: content,
-            author: localStorage.getItem('fNick') || '작성자',
-            date: new Date().toISOString(),
-            images: tempImages,
-            checked: false
-        };
-
-        const transaction = db.transaction(["posts"], "readwrite");
-        transaction.objectStore("posts").put(postData).onsuccess = () => {
-            goHome();
-        };
-    }
-
-    async function toggleCheck(id) {
-        const transaction = db.transaction(["posts"], "readwrite");
-        const store = transaction.objectStore("posts");
-        store.get(id).onsuccess = (e) => {
-            const p = e.target.result;
-            p.checked = !p.checked;
-            store.put(p).onsuccess = () => goDetail(id);
-        };
-    }
-
-    function deletePost() {
-        if(confirm("삭제하시겠습니까?")) {
-            const transaction = db.transaction(["posts"], "readwrite");
-            transaction.objectStore("posts").delete(currentId).onsuccess = () => goHome();
-        }
-    }
-
-    function goEdit() {
-        const transaction = db.transaction(["posts"], "readonly");
-        transaction.objectStore("posts").get(currentId).onsuccess = (e) => {
-            const p = e.target.result;
-            document.getElementById('wTitle').value = p.title;
-            document.getElementById('wContent').value = p.content;
-            tempImages = p.images || [];
-            document.getElementById('fileStatus').innerText = "사진 " + tempImages.length + "장 유지됨";
-            showPage('writePage');
-        };
-    }
-
-    function handleFiles(input) {
-        for(let file of input.files) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                tempImages.push(e.target.result);
-                document.getElementById('fileStatus').innerText = "사진 " + tempImages.length + "장 선택됨";
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function goHome() { showPage('listPage'); renderList(); }
-    function toggleNick() {
-        const layer = document.getElementById('nickLayer');
-        layer.style.display = layer.style.display === 'block' ? 'none' : 'block';
-        document.getElementById('nickInput').value = localStorage.getItem('fNick') || '작성자';
-    }
-    function saveNick() { localStorage.setItem('fNick', document.getElementById('nickInput').value); }
-    function clearData() { if(confirm("전체 삭제?")) { indexedDB.deleteDatabase("FolderBoard"); location.reload(); } }
-    function exportData() {
-        const transaction = db.transaction(["posts"], "readonly");
-        transaction.objectStore("posts").getAll().onsuccess = (e) => {
-            const blob = new Blob([JSON.stringify(e.target.result)], {type:"application/json"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "backup.json";
-            a.click();
-        };
-    }
+    // 초기 실행
+    window.onload = renderList;
 </script>
+
 </body>
 </html>
