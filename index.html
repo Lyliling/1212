@@ -4,55 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
+        /* 초기화 및 폰트 설정 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 15px; overflow-x: hidden; }
+        body { background: #fff; font-family: sans-serif; width: 100%; font-size: 16px; overflow-x: hidden; color: #333; }
 
         /* 페이지 컨테이너 */
         .page { width: 100%; padding: 12px; display: none; min-height: 100vh; position: relative; }
         .active { display: block !important; }
 
-        /* 목록 상단 바 */
-        .list-header { width: 100%; height: 45px; border-bottom: 1px solid #ccc; margin-bottom: 8px; }
+        /* 목록 상단 영역 */
+        .list-header { width: 100%; height: 50px; border-bottom: 1px solid #ddd; margin-bottom: 10px; }
         
-        /* 버튼 스타일 (글자 크기 상향) */
+        /* 버튼 스타일 (시원한 크기와 가독성) */
         .btn {
-            display: inline-block; width: 95px; height: 36px; line-height: 36px;
+            display: inline-block; width: 95px; height: 38px; line-height: 38px;
             background: #3b4890; color: #fff; text-align: center;
             text-decoration: none; font-size: 14px; border: none; 
-            border-radius: 3px; cursor: pointer; font-weight: bold;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
         }
+        .btn-write { float: right; margin-top: 5px; } /* 새글쓰기 우측 상단 */
+        .btn-gray { background: #666; width: 80px; }
+        .btn-red { background: #c00; width: 80px; }
+        .btn-sub { background: #eee; color: #333; border: 1px solid #ccc; width: 90px; height: 30px; line-height: 30px; font-size: 12px; }
 
-        /* 새 글 쓰기 버튼 */
-        .btn-write { float: right; margin-top: 4px; }
-
-        /* 본문 하단 버튼 그룹 (오른쪽 아래) */
+        /* 본문 하단 버튼 (우측 하단 고정) */
         .bottom-btns { 
-            position: absolute; bottom: 25px; right: 12px; 
+            position: absolute; bottom: 30px; right: 15px; 
             display: flex; gap: 8px; 
         }
-        
-        .btn-gray { background: #666; width: 75px; }
-        .btn-red { background: #c00; width: 75px; }
 
-        /* 목록 스타일 (글자 크기 상향) */
+        /* 목록 디자인 */
         .list-box { width: 100%; clear: both; }
         .list-item {
-            display: block; width: 100%; padding: 15px 5px;
-            border-bottom: 1px solid #eee; text-decoration: none; color: #000;
+            display: block; width: 100%; padding: 18px 8px;
+            border-bottom: 1px solid #f0f0f0; text-decoration: none; color: #000;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            font-size: 17px; /* 목록 폰트 키움 */
+            font-size: 18px; /* 목록 폰트 크게 */
         }
+        .list-item:active { background: #f9f9f9; }
 
-        /* 입력창 (폰트 키움) */
+        /* 입력창 디자인 */
         .input-box {
-            width: 100%; padding: 10px; font-size: 16px;
-            border: 1px solid #ccc; margin-bottom: 10px;
+            width: 100%; padding: 12px; font-size: 16px;
+            border: 1px solid #bbb; margin-bottom: 12px; border-radius: 2px;
         }
-        textarea.input-box { height: 140px; }
+        textarea.input-box { height: 160px; }
 
-        /* 본문 보기 내용 (폰트 키움) */
-        .v-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #3b4890; padding-bottom: 8px; }
-        .v-content { font-size: 16px; line-height: 1.6; white-space: pre-wrap; padding-bottom: 80px; }
+        /* 본문 읽기 디자인 */
+        .v-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #3b4890; padding-bottom: 10px; color: #000; }
+        .v-content { font-size: 17px; line-height: 1.7; white-space: pre-wrap; padding-bottom: 100px; color: #222; }
+
+        /* 백업/데이터 추출 영역 */
+        #backupArea { margin-top: 20px; padding: 10px; background: #f9f9f9; border: 1px dashed #ccc; display: none; }
     </style>
 </head>
 <body>
@@ -60,13 +63,20 @@
 <div id="listPage" class="page active">
     <div class="list-header">
         <button class="btn btn-write" onclick="goWrite()">새 글 쓰 기</button>
+        <button class="btn btn-sub" style="margin-top:9px;" onclick="toggleBackup()">데이터 추출</button>
     </div>
+    
+    <div id="backupArea">
+        <p style="font-size:11px; margin-bottom:5px;">아래 텍스트를 복사해서 메모장에 보관하세요:</p>
+        <textarea id="backupText" style="width:100%; height:100px; font-size:10px;"></textarea>
+    </div>
+
     <div id="listContent" class="list-box"></div>
 </div>
 
 <div id="writePage" class="page">
     <input type="text" id="inpTitle" class="input-box" placeholder="제목">
-    <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
+    <textarea id="inpContent" class="input-box" placeholder="내용을 입력하세요"></textarea>
     <div style="text-align: right;">
         <button class="btn btn-gray" onclick="saveData()">저장</button>
         <button class="btn btn-gray" onclick="goHome()">취소</button>
@@ -82,18 +92,22 @@
 </div>
 
 <script>
-    var KEY = "lg_folder_final_v3";
+    // 영구 저장 키 고정
+    var KEY = "folder_board_permanent";
 
     function showPage(id) {
         document.getElementById('listPage').style.display = 'none';
         document.getElementById('writePage').style.display = 'none';
         document.getElementById('viewPage').style.display = 'none';
         document.getElementById(id).style.display = 'block';
+        window.scrollTo(0,0);
     }
 
     function getPosts() {
-        var d = localStorage.getItem(KEY);
-        return d ? JSON.parse(d) : [];
+        try {
+            var d = localStorage.getItem(KEY);
+            return d ? JSON.parse(d) : [];
+        } catch(e) { return []; }
     }
 
     function renderList() {
@@ -102,10 +116,11 @@
         container.innerHTML = "";
 
         if(posts.length === 0) {
-            container.innerHTML = "<div style='padding:30px; color:#888; text-align:center;'>글이 없습니다.</div>";
+            container.innerHTML = "<div style='padding:50px 0; color:#999; text-align:center;'>작성된 글이 없습니다.</div>";
             return;
         }
 
+        // 최신글 순서
         posts.sort(function(a, b) { return b.id - a.id; });
 
         for(var i=0; i<posts.length; i++) {
@@ -122,11 +137,12 @@
     function saveData() {
         var t = document.getElementById('inpTitle').value;
         var c = document.getElementById('inpContent').value;
-        if(!t.trim()) return;
+        if(!t.trim()) { alert("제목을 입력해주세요."); return; }
 
         var posts = getPosts();
         posts.push({ id: Date.now(), title: t, content: c });
         localStorage.setItem(KEY, JSON.stringify(posts));
+        
         goHome();
     }
 
@@ -140,7 +156,7 @@
             "<div class='v-content'>" + p.content + "</div>";
         
         document.getElementById('delBtn').onclick = function() {
-            if(confirm("삭제할까요?")) {
+            if(confirm("이 글을 삭제하시겠습니까?")) {
                 var newPosts = posts.filter(function(x) { return x.id !== id; });
                 localStorage.setItem(KEY, JSON.stringify(newPosts));
                 goHome();
@@ -149,14 +165,32 @@
         showPage('viewPage');
     }
 
-    function goHome() { renderList(); showPage('listPage'); }
+    function toggleBackup() {
+        var area = document.getElementById('backupArea');
+        if(area.style.display === 'block') {
+            area.style.display = 'none';
+        } else {
+            area.style.display = 'block';
+            document.getElementById('backupText').value = localStorage.getItem(KEY);
+        }
+    }
+
+    function goHome() { 
+        document.getElementById('backupArea').style.display = 'none';
+        renderList(); 
+        showPage('listPage'); 
+    }
+    
     function goWrite() { 
         showPage('writePage'); 
         document.getElementById('inpTitle').value=""; 
         document.getElementById('inpContent').value=""; 
     }
 
-    window.onload = renderList;
+    // 첫 실행
+    window.onload = function() {
+        renderList();
+    };
 </script>
 
 </body>
