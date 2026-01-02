@@ -4,56 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
+        /* 초기화 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #fff; font-family: sans-serif; width: 100%; overflow-x: hidden; }
 
-        /* 페이지 전환: 무조건 꽉 차게 */
-        .page { width: 100%; min-height: 100vh; padding: 12px; display: none; background: #fff; }
+        /* 페이지 레이아웃: 전환 시 다른 화면은 아예 존재하지 않게 처리 */
+        .page { width: 100%; min-height: 100vh; padding: 12px; display: none; background: #fff; position: absolute; top: 0; left: 0; }
         .active { display: block !important; }
 
-        /* 버튼: 적당한 크기, 우측 배치 */
-        .btn-row { width: 100%; height: 40px; margin-bottom: 10px; }
+        /* 버튼 레이아웃: 우측 상단/하단 배치 */
+        .header-area { width: 100%; height: 45px; margin-bottom: 10px; }
         .btn {
-            float: right; width: 90px; height: 35px; line-height: 35px;
+            float: right; width: 95px; height: 38px; line-height: 38px;
             background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 14px; border: none; border-radius: 3px;
+            text-decoration: none; font-size: 14px; border: none; border-radius: 4px; font-weight: bold;
         }
-        .btn-sub { background: #666; width: 70px; margin-right: 5px; }
-        .btn-del { background: #c00; width: 70px; }
+        .btn-sub { background: #666; width: 75px; margin-right: 5px; }
+        .btn-red { background: #c00; width: 75px; }
 
-        /* 목록: 폰트 크게 */
+        /* 목록 폰트 크게 */
         .list-item {
-            display: block; width: 100%; padding: 15px 5px;
-            border-bottom: 1px solid #eee; text-decoration: none; color: #000;
+            display: block; width: 100%; padding: 18px 8px;
+            border-bottom: 1px solid #f0f0f0; text-decoration: none; color: #000;
             font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* 입력창: 화면 맨 위부터 시작 */
-        .input-box { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; margin-bottom: 10px; }
-        textarea.input-box { height: 150px; }
+        /* 입력창: 화면 최상단 고정 */
+        .input-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #bbb; margin-bottom: 12px; display: block; }
+        textarea.input-box { height: 160px; }
 
-        /* 본문 보기 */
-        .v-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 10px; }
-        .v-content { font-size: 17px; line-height: 1.6; white-space: pre-wrap; padding-bottom: 80px; }
+        /* 본문 읽기 */
+        .v-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 12px; }
+        .v-content { font-size: 17px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; padding-bottom: 100px; }
         
         /* 하단 버튼 바 */
-        .bottom-bar { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 5px; }
+        .bottom-bar { position: fixed; bottom: 25px; right: 15px; display: flex; gap: 8px; z-index: 10; }
     </style>
 </head>
 <body>
 
 <div id="listPage" class="page active">
-    <div class="btn-row">
+    <div class="header-area">
         <button class="btn" onclick="goWrite()">새 글 쓰 기</button>
     </div>
     <div id="listContent"></div>
 </div>
 
 <div id="writePage" class="page">
-    <input type="text" id="inpTitle" class="input-box" placeholder="제목">
-    <textarea id="inpContent" class="input-box" placeholder="내용"></textarea>
+    <input type="text" id="inpTitle" class="input-box" placeholder="제목을 입력하세요">
+    <textarea id="inpContent" class="input-box" placeholder="내용을 입력하세요"></textarea>
     <div style="text-align: right;">
-        <button class="btn btn-sub" onclick="saveData()">저장</button>
+        <button class="btn btn-sub" onclick="saveData()">저장 완료</button>
         <button class="btn btn-sub" onclick="goHome()">취소</button>
     </div>
 </div>
@@ -62,50 +63,55 @@
     <div id="viewContent"></div>
     <div class="bottom-bar">
         <button class="btn btn-sub" onclick="goHome()">목록</button>
-        <button id="delBtn" class="btn btn-del">삭제</button>
+        <button id="delBtn" class="btn btn-red">삭제</button>
     </div>
 </div>
 
 <script>
-    // 저장 키 고정
-    var KEY = "folder_board_permanent_data";
+    // 데이터 보존을 위해 키 이름을 절대 바꾸지 않습니다.
+    var STORAGE_KEY = "LG_FOLDER_PERMANENT_V1";
 
-    // 화면 전환 (다른 화면은 완전히 숨김)
+    // 화면 전환 시 스크롤을 맨 위로 올리고 다른 페이지를 완전히 숨깁니다.
     function showPage(id) {
         var pages = document.getElementsByClassName('page');
         for(var i=0; i<pages.length; i++) { pages[i].classList.remove('active'); }
         document.getElementById(id).classList.add('active');
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
     }
 
-    // 데이터 읽기
+    // 저장소에서 글 가져오기
     function getPosts() {
-        var data = localStorage.getItem(KEY);
+        var data = localStorage.getItem(STORAGE_KEY);
+        if (!data) return [];
         try {
-            return data ? JSON.parse(data) : [];
-        } catch(e) { return []; }
+            return JSON.parse(data);
+        } catch(e) {
+            console.error("Data parse error");
+            return [];
+        }
     }
 
-    // 목록 렌더링 (최신순)
+    // 목록 그리기
     function renderList() {
         var posts = getPosts();
         var container = document.getElementById('listContent');
         container.innerHTML = "";
         
         if(posts.length === 0) {
-            container.innerHTML = "<div style='text-align:center; padding:30px; color:#999;'>글이 없습니다.</div>";
+            container.innerHTML = "<div style='text-align:center; padding:50px 0; color:#999;'>글이 없습니다.</div>";
             return;
         }
 
+        // 최신글 순서
         posts.sort(function(a, b) { return b.id - a.id; });
 
         for(var i=0; i<posts.length; i++) {
             (function(p){
-                var d = document.createElement('div');
-                d.className = 'list-item';
-                d.innerText = p.title;
-                d.onclick = function() { loadView(p.id); };
-                container.appendChild(d);
+                var item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerText = p.title;
+                item.onclick = function() { loadView(p.id); };
+                container.appendChild(item);
             })(posts[i]);
         }
     }
@@ -117,29 +123,35 @@
         showPage('writePage');
     }
 
-    // 저장 로직 (직접 localStorage에 쓰기)
+    // 데이터 저장
     function saveData() {
         var t = document.getElementById('inpTitle').value;
         var c = document.getElementById('inpContent').value;
-        if(!t.trim()) return;
+        if(!t.trim()) { alert("제목을 입력하세요."); return; }
 
         var posts = getPosts();
-        posts.push({ id: Date.now(), title: t, content: c });
-        localStorage.setItem(KEY, JSON.stringify(posts));
+        var newPost = { id: Date.now(), title: t, content: c };
+        posts.push(newPost);
+        
+        // 로컬 저장소에 즉시 강제 저장
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
         
         goHome();
     }
 
-    // 목록으로 가기
+    // 목록 화면으로
     function goHome() {
         renderList();
         showPage('listPage');
     }
 
-    // 본문 보기
+    // 본문 읽기
     function loadView(id) {
         var posts = getPosts();
-        var p = posts.filter(function(x) { return x.id === id; })[0];
+        var p = null;
+        for(var i=0; i<posts.length; i++) {
+            if(posts[i].id === id) { p = posts[i]; break; }
+        }
         if(!p) return;
 
         document.getElementById('viewContent').innerHTML = 
@@ -147,19 +159,21 @@
             "<div class='v-content'>" + p.content + "</div>";
         
         document.getElementById('delBtn').onclick = function() {
-            if(confirm("삭제할까요?")) {
-                var newPosts = posts.filter(function(x) { return x.id !== id; });
-                localStorage.setItem(KEY, JSON.stringify(newPosts));
+            if(confirm("이 글을 삭제할까요?")) {
+                var currentPosts = getPosts();
+                var filtered = currentPosts.filter(function(x) { return x.id !== id; });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
                 goHome();
             }
         };
         showPage('viewPage');
     }
 
-    // 초기 실행
+    // 초기 실행 및 새로고침 대응
     window.onload = function() {
         renderList();
     };
 </script>
+
 </body>
 </html>
