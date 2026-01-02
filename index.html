@@ -6,83 +6,79 @@
     <title>자유게시판</title>
     <style>
         :root { --main-color: #3b4890; }
-        * { box-sizing: border-box; } /* 모든 요소의 너비를 테두리 포함 계산 */
+        * { box-sizing: border-box; }
         
-        body { 
-            font-family: 'Malgun Gothic', sans-serif; 
-            background-color: #fff; 
+        html, body { 
             margin: 0; padding: 0; 
-            color: #333; 
-            overflow-x: hidden; /* 가로 스크롤 방지 */
+            width: 100%; height: 100%;
+            background-color: #fff; /* 회색 배경 제거 */
+            font-family: 'Malgun Gothic', sans-serif;
+            overflow-x: hidden;
         }
         
-        /* 엘지 폴더 화면에 꽉 차게 설정 */
+        /* 화면 전체를 사용하도록 설정 */
         .container { 
-            width: 100%; 
+            width: 100vw; 
             min-height: 100vh;
             display: flex; flex-direction: column; 
+            background: #fff;
         }
 
-        header { background: var(--main-color); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { font-size: 15px; margin: 0; }
+        header { 
+            background: var(--main-color); 
+            color: white; padding: 12px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        header h1 { font-size: 16px; margin: 0; }
         
-        /* 카테고리 탭 (스크롤 가능하게) */
-        .category-tabs { background: #eee; border-bottom: 2px solid var(--main-color); overflow-x: auto; white-space: nowrap; }
+        /* 카테고리 탭 */
+        .category-tabs { background: #f4f4f4; border-bottom: 2px solid var(--main-color); overflow-x: auto; }
         .main-tabs { display: flex; }
-        .main-tab { padding: 8px 10px; font-size: 12px; cursor: pointer; color: #333; }
+        .main-tab { padding: 10px 15px; font-size: 13px; cursor: pointer; color: #333; }
         .main-tab.active { background: var(--main-color); color: white; font-weight: bold; }
         
-        /* 게시판 테이블 (삐져나오지 않게 고정) */
+        /* 게시판 테이블 최적화 */
         .board-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .board-table th { background: #f4f4f4; font-size: 11px; padding: 5px 2px; border-bottom: 1px solid #ddd; }
+        .board-table th { background: #eee; font-size: 12px; padding: 8px 5px; border-bottom: 1px solid #ddd; }
         .board-table td { 
             border-bottom: 1px solid #eee; 
-            padding: 8px 4px; 
-            font-size: 12px; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
+            padding: 10px 5px; 
+            font-size: 13px; 
         }
         
-        /* 제목 셀은 길면 아래로 줄바꿈 되도록 설정 */
-        .title-cell { white-space: normal !important; word-break: break-all; line-height: 1.2; }
-        .num-cell { width: 30px; text-align: center; font-size: 10px; } 
-        .author-cell { width: 55px; font-size: 11px; text-align: center; }
-        .date-cell { width: 45px; text-align: center; font-size: 10px; color: #888; }
+        .num-cell { width: 40px; text-align: center; color: #888; } 
+        .title-cell { word-break: break-all; line-height: 1.3; }
+        .date-cell { width: 50px; text-align: center; font-size: 11px; color: #999; }
 
-        /* 하단 컨트롤러 */
-        .list-footer { padding: 10px; border-top: 1px solid #eee; background: #fafafa; }
-        .search-area { display: flex; margin-top: 10px; }
-        #searchInput { flex: 1; height: 30px; font-size: 12px; border: 1px solid #ccc; padding: 0 5px; }
+        /* 하단 푸터 */
+        .list-footer { padding: 10px; background: #fff; border-top: 1px solid #eee; }
         
-        /* 글쓰기/상세보기 화면 */
-        #writeView, #detailView { padding: 10px; display: none; }
+        /* 보기/쓰기 화면 */
+        #writeView, #detailView { padding: 12px; display: none; }
         .active { display: block !important; }
 
-        #titleInput { width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; margin-bottom: 8px; }
+        #titleInput { 
+            width: 100%; padding: 10px; font-size: 15px; 
+            border: 1px solid #ccc; margin-bottom: 10px; border-radius: 0;
+        }
         .editor-content { 
-            width: 100%; min-height: 150px; 
-            font-size: 14px; padding: 10px; 
-            border: 1px solid #ddd; word-break: break-all;
+            width: 100%; min-height: 200px; 
+            font-size: 15px; padding: 10px; 
+            border: 1px solid #ccc; word-break: break-all;
+            outline: none;
         }
         
-        .view-title { font-size: 15px; font-weight: bold; border-bottom: 2px solid var(--main-color); padding-bottom: 5px; }
-        .view-content { font-size: 14px; line-height: 1.5; padding: 10px 0; min-height: 100px; word-break: break-all; }
+        .view-title { font-size: 17px; font-weight: bold; margin-bottom: 5px; color: #000; }
+        .view-info { font-size: 12px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .view-content { font-size: 15px; line-height: 1.6; word-break: break-all; }
         
-        /* 버튼 공통 */
-        .btn-main { background: var(--main-color); color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 2px; }
-        .btn-sub { background: #666; color: white; border: none; padding: 8px 12px; font-size: 12px; }
+        .btn-main { background: var(--main-color); color: white; border: none; padding: 12px; font-size: 14px; cursor: pointer; }
+        .btn-sub { background: #777; color: white; border: none; padding: 10px; font-size: 13px; cursor: pointer; }
 
-        /* 댓글 스타일 */
-        .comment-item { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
-        .comment-info { font-size: 11px; font-weight: bold; color: #555; }
-        .comment-text { font-size: 13px; margin-top: 3px; word-break: break-all; }
-
-        /* 설정 레이어 조정 */
         #nickSettingLayer { 
-            display: none; position: absolute; right: 5px; top: 35px; 
-            background: white; border: 1px solid #ccc; padding: 10px; 
-            width: 200px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: none; position: absolute; right: 0; top: 40px; 
+            background: white; border: 1px solid #ccc; padding: 15px; 
+            width: 100%; z-index: 100;
         }
     </style>
 </head>
@@ -90,86 +86,66 @@
 
 <div class="container">
     <header>
-        <h1 onclick="resetAndHome()">자유게시판</h1>
-        <span style="cursor:pointer;" onclick="toggleNickLayer()">⚙️</span>
+        <h1 onclick="showList()">자유게시판</h1>
+        <span onclick="toggleNickLayer()" style="font-size: 20px;">⚙️</span>
         <div id="nickSettingLayer">
-            <input type="text" id="globalNick" onchange="saveNickname()" placeholder="닉네임" style="width:100%; margin-bottom:5px;">
-            <input type="color" id="themeColor" oninput="changeThemeColor(this.value)" style="width:100%; height:25px; margin-bottom:5px;">
-            <button onclick="exportData()" style="width:100%; margin-bottom:3px; font-size:11px;">데이터 백업</button>
-            <button onclick="deleteAllPosts()" style="width:100%; color:red; font-size:11px;">전체 삭제</button>
+            <label style="font-size:12px;">닉네임 변경</label>
+            <input type="text" id="globalNick" onchange="saveNickname()" style="width:100%; padding:8px; margin:5px 0;">
+            <button onclick="exportData()" style="width:100%; padding:8px; margin-top:10px;">데이터 백업</button>
+            <button onclick="deleteAllPosts()" style="width:100%; padding:8px; margin-top:5px; color:red;">전체 데이터 삭제</button>
         </div>
     </header>
 
     <div id="listView" class="active">
         <div class="category-tabs">
             <div class="main-tabs">
-                <div class="main-tab active" onclick="filterCategory('전체')">전체</div>
-                <div class="main-tab" onclick="filterCategory('공지')">공지</div>
-                <div class="main-tab" onclick="filterCategory('체크')">체크</div>
-                <div class="main-tab" onclick="filterCategory('잡담')">잡담</div>
-                <div class="main-tab" onclick="filterCategory('일기')">일기</div>
+                <div class="main-tab active" id="tab-all" onclick="filterCategory('전체')">전체글</div>
+                <div class="main-tab" id="tab-check" onclick="filterCategory('체크')">체크함</div>
             </div>
         </div>
         <table class="board-table">
             <thead>
                 <tr>
                     <th class="num-cell">번호</th>
-                    <th style="width:auto;">제목</th>
-                    <th class="author-cell">글쓴이</th>
+                    <th>제목</th>
                     <th class="date-cell">날짜</th>
                 </tr>
             </thead>
             <tbody id="listBody"></tbody>
         </table>
-        <div id="pagination" style="display:flex; justify-content:center; padding:10px; gap:5px;"></div>
+        <div id="pagination" style="display:flex; justify-content:center; padding:15px; gap:8px;"></div>
         <div class="list-footer">
-            <button class="btn-main" onclick="showWriteForm()" style="width:100%;">새 글 쓰기</button>
-            <div class="search-area">
-                <input type="text" id="searchInput" placeholder="검색어 입력">
-                <button class="btn-sub" onclick="searchPosts()">검색</button>
-            </div>
+            <button class="btn-main" onclick="showWriteForm()" style="width:100%;">글 쓰 기</button>
         </div>
     </div>
 
     <div id="detailView">
         <div id="postDetail"></div>
-        <div style="margin-top:15px; background:#f9f9f9; padding:10px;">
-            <div id="commentCount" style="font-size:12px; font-weight:bold;">댓글 0</div>
-            <div id="commentList"></div>
-            <textarea id="commentInput" placeholder="댓글" style="width:100%; height:40px; margin-top:5px;"></textarea>
-            <button class="btn-main" onclick="addComment()" style="width:100%; margin-top:5px;">댓글등록</button>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:10px;">
-            <button class="btn-sub" onclick="showList()">목록</button>
-            <div>
-                <button class="btn-main" onclick="editPost()">수정</button>
-                <button class="btn-sub" onclick="deletePost()" style="background:red;">삭제</button>
+        <div style="display:flex; justify-content:space-between; margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+            <button class="btn-sub" onclick="showList()">목록으로</button>
+            <div style="display:flex; gap:5px;">
+                <button class="btn-main" onclick="editPost()" style="padding:10px;">수정</button>
+                <button class="btn-sub" onclick="deletePost()" style="background:#d9534f; padding:10px;">삭제</button>
             </div>
         </div>
     </div>
 
     <div id="writeView">
-        <select id="selectedHeadValue" style="width:100%; padding:5px; margin-bottom:5px;">
-            <option value="잡담">잡담</option>
-            <option value="일기">일기</option>
-            <option value="창작">창작</option>
-            <option value="공지">공지</option>
-        </select>
-        <input type="text" id="titleInput" placeholder="제목">
+        <input type="text" id="titleInput" placeholder="제목을 입력하세요">
         <div id="editor" class="editor-content" contenteditable="true"></div>
-        <div style="margin-top:10px;">
-            <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImgInput(this)" style="font-size:11px; width:100%;">
-            <div id="imgListArea" style="font-size:10px; color:#666; margin-top:3px;"></div>
+        <div style="margin-top:15px; border:1px dashed #ccc; padding:10px;">
+            <label style="font-size:12px; font-weight:bold;">사진 첨부</label>
+            <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImgInput(this)" style="width:100%; margin-top:5px;">
+            <div id="imgListArea" style="font-size:11px; color:#666; margin-top:5px;"></div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-main" id="saveBtn" onclick="savePost()" style="flex:1;">등록</button>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn-main" id="saveBtn" onclick="savePost()" style="flex:1;">등록 완료</button>
             <button class="btn-sub" onclick="showList()" style="flex:1;">취소</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* 기존 JavaScript 로직 유지하되, 폴더폰 호환성을 위해 일부 최적화 */
     let db;
     const DB_NAME = "BoardDB";
     const STORE_NAME = "posts";
@@ -177,7 +153,7 @@
     let currentPostId = null;
     let isEditMode = false;
     let currentPage = 1;
-    const postsPerPage = 8;
+    const postsPerPage = 10;
     let tempFiles = [];
 
     function initDB() {
@@ -195,7 +171,7 @@
         return new Promise((resolve) => {
             const transaction = db.transaction([STORE_NAME], "readonly");
             const request = transaction.objectStore(STORE_NAME).getAll();
-            request.onsuccess = () => resolve(request.result.sort((a, b) => new Date(b.date) - new Date(a.date)));
+            request.onsuccess = () => resolve(request.result.sort((a, b) => b.id - a.id));
         });
     }
 
@@ -222,8 +198,7 @@
 
     window.onload = async function() {
         await initDB();
-        document.getElementById('globalNick').value = localStorage.getItem('myNickname') || '사용자';
-        changeThemeColor(localStorage.getItem('myThemeColor') || '#3b4890');
+        document.getElementById('globalNick').value = localStorage.getItem('myNickname') || '작성자';
         showList();
     };
 
@@ -231,19 +206,16 @@
         const body = document.getElementById('listBody'); body.innerHTML = ''; 
         const allPosts = await dbGetAll();
         let filtered = allPosts;
-        if(currentFilter !== '전체') filtered = allPosts.filter(p => p.head === currentFilter || (currentFilter==='체크' && p.checked));
+        if(currentFilter === '체크') filtered = allPosts.filter(p => p.checked);
 
         const start = (currentPage - 1) * postsPerPage;
         const pagePosts = filtered.slice(start, start + postsPerPage);
 
         pagePosts.forEach((p, i) => {
-            const cCount = p.comments ? p.comments.length : 0;
-            const cBadge = cCount > 0 ? `<span style="color:red;font-size:10px;">[${cCount}]</span>` : '';
             body.innerHTML += `<tr onclick="viewPost(${p.id})">
                 <td class="num-cell">${filtered.length - start - i}</td>
-                <td class="title-cell">[${p.head}] ${p.title} ${cBadge}</td>
-                <td class="author-cell">${p.author}</td>
-                <td class="date-cell">${formatListDate(p.date)}</td>
+                <td class="title-cell">${p.title}</td>
+                <td class="date-cell">${formatDate(p.date)}</td>
             </tr>`;
         });
         renderPagination(Math.ceil(filtered.length / postsPerPage));
@@ -252,10 +224,12 @@
     function renderPagination(total) {
         const container = document.getElementById('pagination');
         container.innerHTML = '';
+        if(total <= 1) return;
         for (let i = 1; i <= total; i++) {
             const btn = document.createElement('button');
             btn.innerText = i;
-            if (i === currentPage) btn.style.fontWeight = 'bold';
+            btn.style.padding = "5px 10px";
+            if (i === currentPage) btn.style.background = "#eee";
             btn.onclick = () => { currentPage = i; renderList(); };
             container.appendChild(btn);
         }
@@ -264,16 +238,15 @@
     async function savePost() {
         const title = document.getElementById('titleInput').value.trim();
         const content = document.getElementById('editor').innerHTML;
-        if(!title) return alert("제목 입력!");
+        if(!title) return alert("제목을 적어주세요.");
         
         const postData = {
             id: isEditMode ? currentPostId : Date.now(),
             title, content,
-            head: document.getElementById('selectedHeadValue').value,
-            author: localStorage.getItem('myNickname') || '사용자',
+            author: localStorage.getItem('myNickname') || '작성자',
             date: new Date().toISOString(),
             images: tempFiles,
-            comments: isEditMode ? (await dbGetById(currentPostId)).comments : []
+            checked: isEditMode ? (await dbGetById(currentPostId)).checked : false
         };
         await dbSave(postData);
         showList();
@@ -285,61 +258,102 @@
         hideAll();
         document.getElementById('detailView').classList.add('active');
         let imgHtml = "";
-        if(p.images) p.images.forEach(img => imgHtml += `<img src="${img}" style="max-width:100%; margin-bottom:5px;">`);
+        if(p.images) p.images.forEach(img => imgHtml += `<img src="${img}" style="max-width:100%; display:block; margin-bottom:10px;">`);
         
+        const checkIcon = p.checked ? "☑ 체크됨" : "☐ 체크하기";
         document.getElementById('postDetail').innerHTML = `
             <div class="view-title">${p.title}</div>
-            <div style="font-size:11px; color:#888; margin:5px 0;">${p.author} | ${p.date.slice(0,16)}</div>
+            <div class="view-info">
+                <span>${p.author}</span> | <span>${p.date.slice(5,16).replace('T',' ')}</span>
+                <span onclick="toggleCheck()" style="float:right; color:var(--main-color); font-weight:bold;">${checkIcon}</span>
+            </div>
             <div class="view-content">${imgHtml}${p.content}</div>
         `;
-        renderComments(p.comments || []);
+        window.scrollTo(0,0);
     }
 
-    function renderComments(comments) {
-        document.getElementById('commentCount').innerText = `댓글 ${comments.length}`;
-        document.getElementById('commentList').innerHTML = comments.map(c => `
-            <div class="comment-item">
-                <div class="comment-info">${c.author}</div>
-                <div class="comment-text">${c.text}</div>
-            </div>
-        `).join('');
-    }
-
-    async function addComment() {
-        const input = document.getElementById('commentInput');
-        if(!input.value.trim()) return;
+    async function toggleCheck() {
         const p = await dbGetById(currentPostId);
-        if(!p.comments) p.comments = [];
-        p.comments.push({ author: localStorage.getItem('myNickname') || '사용자', text: input.value, date: new Date().toISOString() });
+        p.checked = !p.checked;
         await dbSave(p);
-        input.value = '';
         viewPost(currentPostId);
     }
 
-    /* 유틸리티 함수 */
-    function formatListDate(iso) {
+    function formatDate(iso) {
         const d = new Date(iso);
         return (d.getMonth()+1) + "/" + d.getDate();
     }
+    
     function hideAll() {
         document.getElementById('listView').classList.remove('active');
         document.getElementById('detailView').classList.remove('active');
         document.getElementById('writeView').classList.remove('active');
+        document.getElementById('nickSettingLayer').style.display = 'none';
     }
+
     function showList() { hideAll(); document.getElementById('listView').classList.add('active'); renderList(); }
-    function showWriteForm() { hideAll(); isEditMode = false; tempFiles = []; document.getElementById('writeView').classList.add('active'); }
-    async function editPost() { const p = await dbGetById(currentPostId); showWriteForm(); isEditMode = true; document.getElementById('titleInput').value = p.title; document.getElementById('editor').innerHTML = p.content; }
-    async function deletePost() { if(confirm("삭제?")) { await dbDelete(currentPostId); showList(); } }
-    function toggleNickLayer() { const s = document.getElementById('nickSettingLayer').style; s.display = s.display === 'block' ? 'none' : 'block'; }
-    function changeThemeColor(c) { document.documentElement.style.setProperty('--main-color', c); localStorage.setItem('myThemeColor', c); }
+    function showWriteForm() { 
+        hideAll(); 
+        isEditMode = false; 
+        tempFiles = []; 
+        document.getElementById('titleInput').value = '';
+        document.getElementById('editor').innerHTML = '';
+        document.getElementById('imgListArea').innerText = '';
+        document.getElementById('writeView').classList.add('active'); 
+    }
+
+    async function editPost() { 
+        const p = await dbGetById(currentPostId); 
+        showWriteForm(); 
+        isEditMode = true; 
+        document.getElementById('titleInput').value = p.title; 
+        document.getElementById('editor').innerHTML = p.content; 
+        tempFiles = p.images || [];
+        document.getElementById('imgListArea').innerText = "사진 " + tempFiles.length + "장 유지됨";
+    }
+
+    async function deletePost() { if(confirm("정말 삭제할까요?")) { await dbDelete(currentPostId); showList(); } }
+    
+    function toggleNickLayer() { 
+        const s = document.getElementById('nickSettingLayer').style; 
+        s.display = s.display === 'block' ? 'none' : 'block'; 
+    }
+
     function saveNickname() { localStorage.setItem('myNickname', document.getElementById('globalNick').value); }
-    function filterCategory(cat) { currentFilter = cat; currentPage = 1; renderList(); }
+    
+    function filterCategory(cat) { 
+        currentFilter = cat; currentPage = 1; 
+        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+        if(cat === '전체') document.getElementById('tab-all').classList.add('active');
+        else document.getElementById('tab-check').classList.add('active');
+        renderList(); 
+    }
     
     async function handleImgInput(input) {
         for (let file of input.files) {
             const reader = new FileReader();
-            reader.onload = (e) => { tempFiles.push(e.target.result); document.getElementById('imgListArea').innerText = "사진 " + tempFiles.length + "장 선택됨"; };
+            reader.onload = (e) => { 
+                tempFiles.push(e.target.result); 
+                document.getElementById('imgListArea').innerText = "사진 " + tempFiles.length + "장 선택됨"; 
+            };
             reader.readAsDataURL(file);
+        }
+    }
+
+    async function exportData() {
+        const all = await dbGetAll();
+        const blob = new Blob([JSON.stringify(all)], {type: "application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "backup.json";
+        a.click();
+    }
+
+    async function deleteAllPosts() {
+        if(confirm("모든 글이 삭제됩니다. 계속할까요?")) {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            transaction.objectStore(STORE_NAME).clear();
+            location.reload();
         }
     }
 </script>
