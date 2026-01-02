@@ -5,124 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>폴더폰 게시판</title>
     <style>
-        /* 초기화: 회색 칸 방지 및 전체 화면 사용 */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: rgba(0,0,0,0); }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; font-family: sans-serif; }
-        
+        /* 초기화 및 전체화면 */
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #fff; font-family: sans-serif; overflow-x: hidden; }
+
         /* 헤더 */
-        .header { background: #3b4890; color: #fff; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
+        .header { background: #3b4890; color: #fff; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 10; }
 
-        /* 페이지 기본 설정 */
-        .page { display: none; width: 100%; padding: 10px; }
-        .active { display: block; }
+        /* 페이지 전환 로직 (CSS만으로 작동) */
+        .page { display: none; width: 100%; min-height: 100vh; padding: 15px; }
+        /* URL 끝이 #ID 로 끝나면 해당 ID를 보여줌 */
+        #listPage:target, #writePage:target, #viewPage:target { display: block; }
+        /* 기본 상태(URL에 아무것도 없을 때)는 목록 표시 */
+        .page:first-of-type { display: block; }
+        #listPage:target ~ #defaultPage { display: none; }
 
-        /* 클릭 가능한 큰 버튼 (링크 방식) */
-        .touch-btn {
-            display: block; width: 100%; padding: 20px; margin-bottom: 10px;
+        /* 아주 큰 버튼 스타일 */
+        .big-btn {
+            display: block; width: 100%; padding: 25px 10px; margin-bottom: 15px;
             background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 20px; font-weight: bold;
-            border-radius: 5px;
+            text-decoration: none; font-size: 22px; font-weight: bold;
+            border: 3px solid #283593;
         }
-        .touch-btn:active { background: #1a237e; }
-        .btn-gray { background: #777; }
-        .btn-red { background: #c62828; }
+        .btn-gray { background: #666; border-color: #444; }
+        .btn-red { background: #c62828; border-color: #b71c1c; }
 
-        /* 목록 아이템 (터치 영역 극대화) */
-        .list-link {
-            display: block; width: 100%; padding: 20px 15px;
-            border-bottom: 2px solid #eee; text-decoration: none; color: #000;
+        /* 목록 아이템 */
+        .list-item {
+            display: block; width: 100%; padding: 20px 10px;
+            border-bottom: 2px solid #ddd; text-decoration: none; color: #000;
         }
-        .list-link:active { background: #f5f5f5; }
-        .title-text { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; }
-        .date-text { font-size: 13px; color: #888; }
+        .list-item:active { background: #eee; }
+        .list-title { font-size: 18px; font-weight: bold; display: block; }
 
-        /* 입력창 (표준 양식) */
+        /* 입력창 */
         .input-box {
             width: 100%; padding: 15px; font-size: 18px;
-            border: 2px solid #ccc; margin-bottom: 10px;
-            display: block; border-radius: 0;
+            border: 2px solid #000; margin-bottom: 15px; border-radius: 0;
+            display: block; background: #fff;
         }
-        textarea.input-box { height: 180px; resize: none; }
+        textarea.input-box { height: 200px; }
 
-        /* 상세 보기 */
-        .view-box { padding: 5px; }
-        .view-t { font-size: 22px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 15px; }
-        .view-c { font-size: 18px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+        /* 본문 */
+        .view-t { font-size: 24px; font-weight: bold; margin-bottom: 15px; border-bottom: 3px solid #3b4890; padding-bottom: 10px; }
+        .view-c { font-size: 18px; line-height: 1.6; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
 <div class="header">자유게시판</div>
 
-<div id="listPage" class="page active">
-    <a href="javascript:void(0)" class="touch-btn" onclick="goWrite()">[ 새 글 쓰 기 ]</a>
-    <div id="listContent"></div>
+<div id="listPage" class="page">
+    <a href="#writePage" class="big-btn">▶ 새 글 쓰 기</a>
+    <div id="listContent">
+        </div>
 </div>
 
 <div id="writePage" class="page">
-    <input type="text" id="inpTitle" class="input-box" placeholder="제목을 입력하세요">
-    <textarea id="inpContent" class="input-box" placeholder="내용을 입력하세요"></textarea>
-    <a href="javascript:void(0)" class="touch-btn" onclick="saveData()">저장하기</a>
-    <a href="javascript:void(0)" class="touch-btn btn-gray" onclick="goList()">취소</a>
+    <input type="text" id="inpTitle" class="input-box" placeholder="여기에 제목 입력">
+    <textarea id="inpContent" class="input-box" placeholder="여기에 내용 입력"></textarea>
+    <a href="#listPage" class="big-btn" onclick="saveData()">[ 저 장 완 료 ]</a>
+    <a href="#listPage" class="big-btn btn-gray">취 소</a>
 </div>
 
 <div id="viewPage" class="page">
-    <div class="view-box" id="viewContent"></div>
+    <div id="viewContent"></div>
     <div style="margin-top:20px;">
-        <a href="javascript:void(0)" class="touch-btn btn-gray" onclick="goList()">목록으로</a>
-        <a href="javascript:void(0)" id="delBtnLink" class="touch-btn btn-red">삭제하기</a>
+        <a href="#listPage" class="big-btn btn-gray">목록으로 돌아가기</a>
+        <a href="#listPage" id="delBtn" class="big-btn btn-red">이 글 삭제</a>
     </div>
 </div>
 
-<script>
-    const KEY = "folder_board_db";
+<div id="defaultPage">
+    <script>location.hash = "#listPage";</script>
+</div>
 
-    function getDB() {
-        const data = localStorage.getItem(KEY);
-        return data ? JSON.parse(data) : [];
+<script>
+    const STORAGE_KEY = "folder_board_simple";
+
+    // 데이터 가져오기
+    function getPosts() {
+        const d = localStorage.getItem(STORAGE_KEY);
+        return d ? JSON.parse(d) : [];
     }
 
+    // 목록 그리기
     function renderList() {
-        const posts = getDB();
+        const posts = getPosts();
         const container = document.getElementById('listContent');
         container.innerHTML = '';
 
         if(posts.length === 0) {
-            container.innerHTML = '<div style="padding:40px; text-align:center; color:#999;">글이 없습니다.</div>';
+            container.innerHTML = '<div style="padding:50px 10px; text-align:center; color:#666; font-size:18px;">글이 하나도 없습니다.</div>';
             return;
         }
 
         posts.sort((a,b) => b.id - a.id).forEach(p => {
             const a = document.createElement('a');
-            a.className = 'list-link';
-            a.href = "javascript:void(0)";
-            a.onclick = () => goView(p.id);
-            a.innerHTML = `<span class="title-text">${p.title}</span><span class="date-text">${p.date}</span>`;
+            a.className = 'list-item';
+            a.href = "#viewPage"; // 앵커 이동
+            a.onclick = () => loadView(p.id);
+            a.innerHTML = `<span class="list-title">${p.title}</span>`;
             container.appendChild(a);
         });
     }
 
+    // 저장
     function saveData() {
         const t = document.getElementById('inpTitle').value;
         const c = document.getElementById('inpContent').value;
-        if(!t.trim()) { alert("제목 필수!"); return; }
+        if(!t.trim()) return;
 
-        const posts = getDB();
-        posts.push({
-            id: Date.now(),
-            title: t,
-            content: c,
-            date: new Date().toLocaleDateString()
-        });
-        localStorage.setItem(KEY, JSON.stringify(posts));
-        
+        const posts = getPosts();
+        posts.push({ id: Date.now(), title: t, content: c });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+
+        // 입력창 비우기
         document.getElementById('inpTitle').value = '';
         document.getElementById('inpContent').value = '';
-        goList();
+        
+        renderList(); // 목록 갱신
     }
 
-    function goView(id) {
-        const posts = getDB();
+    // 본문 로드
+    function loadView(id) {
+        const posts = getPosts();
         const p = posts.find(item => item.id === id);
         if(!p) return;
 
@@ -130,30 +137,23 @@
             <div class="view-t">${p.title}</div>
             <div class="view-c">${p.content}</div>
         `;
-        document.getElementById('delBtnLink').onclick = () => deletePost(id);
-        showPage('viewPage');
+        
+        document.getElementById('delBtn').onclick = () => {
+            if(confirm("삭제할까요?")) {
+                const newPosts = getPosts().filter(item => item.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newPosts));
+                renderList();
+            }
+        };
     }
 
-    function deletePost(id) {
-        if(!confirm("정말 삭제할까요?")) return;
-        let posts = getDB();
-        posts = posts.filter(p => p.id !== id);
-        localStorage.setItem(KEY, JSON.stringify(posts));
-        goList();
-    }
+    // 해시(주소)가 바뀔 때마다 목록 갱신 (목록으로 돌아올 때 대비)
+    window.onhashchange = () => {
+        if(location.hash === "#listPage") renderList();
+    };
 
-    function showPage(id) {
-        document.getElementById('listPage').style.display = 'none';
-        document.getElementById('writePage').style.display = 'none';
-        document.getElementById('viewPage').style.display = 'none';
-        document.getElementById(id).style.display = 'block';
-        window.scrollTo(0,0);
-    }
-
-    function goList() { showPage('listPage'); renderList(); }
-    function goWrite() { showPage('writePage'); }
-
-    window.onload = renderList;
+    // 첫 실행
+    renderList();
 </script>
 
 </body>
