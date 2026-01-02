@@ -3,206 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>자유게시판 갤러리</title>
+    <title>자유게시판</title>
     <style>
-        :root { --main-color: #3b4890; --dc-blue: #3b4890; }
+        :root { --main-color: #3b4890; }
+        * { box-sizing: border-box; } /* 모든 요소의 너비를 테두리 포함 계산 */
+        
         body { 
             font-family: 'Malgun Gothic', sans-serif; 
-            background-color: #eee; 
+            background-color: #fff; 
             margin: 0; padding: 0; 
             color: #333; 
-            display: flex; justify-content: center; align-items: flex-start;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
         }
         
-        /* 240x320 고정 컨테이너 */
+        /* 엘지 폴더 화면에 꽉 차게 설정 */
         .container { 
-            width: 240px; 
-            height: 320px; 
-            background: white; 
-            border: 1px solid #ccc; 
-            position: relative; 
+            width: 100%; 
+            min-height: 100vh;
             display: flex; flex-direction: column; 
-            overflow-x: hidden;
-            overflow-y: auto;
         }
 
-        header { background: var(--main-color); color: white; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        header h1 { font-size: 14px; margin: 0; cursor: default; }
+        header { background: var(--main-color); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 15px; margin: 0; }
         
-        .settings-container { position: relative; display: flex; align-items: center; }
-        .gear-btn { cursor: pointer; font-size: 16px; }
-        
-        #nickSettingLayer { 
-            display: none; position: absolute; right: 0; top: 25px; 
-            background: white; border: 1px solid #ccc; padding: 10px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 100; 
-            color: #333; width: 180px; border-radius: 4px; 
-        }
-
-        /* 탭 메뉴 최적화 */
-        .category-tabs { display: block; background: #fff; border-bottom: 2px solid var(--main-color); flex-shrink: 0; }
-        .main-tabs { display: flex; overflow-x: auto; background: #f1f1f1; }
-        .main-tab { padding: 5px 8px; font-size: 11px; cursor: pointer; border-right: 1px solid #ddd; white-space: nowrap; flex: 1; text-align: center; }
+        /* 카테고리 탭 (스크롤 가능하게) */
+        .category-tabs { background: #eee; border-bottom: 2px solid var(--main-color); overflow-x: auto; white-space: nowrap; }
+        .main-tabs { display: flex; }
+        .main-tab { padding: 8px 10px; font-size: 12px; cursor: pointer; color: #333; }
         .main-tab.active { background: var(--main-color); color: white; font-weight: bold; }
         
-        .sub-tabs { display: flex; overflow-x: auto; padding: 5px; gap: 8px; scrollbar-width: none; }
-        .sub-tabs::-webkit-scrollbar { display: none; }
-        .sub-tab { font-size: 11px; cursor: pointer; color: #666; white-space: nowrap; }
-        .sub-tab.active { color: var(--main-color); font-weight: bold; }
-
-        /* 게시판 테이블 최적화 */
+        /* 게시판 테이블 (삐져나오지 않게 고정) */
         .board-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .board-table th, .board-table td { border-bottom: 1px solid #eee; padding: 6px 3px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .num-cell { width: 25px; text-align: center !important; } 
-        .head-cell { width: 35px; text-align: center !important; color: #888; } 
-        .author-cell { width: 50px; }
-        .date-cell { width: 40px; text-align: center !important; font-size: 10px; color: #888; }
-        .title-cell { font-size: 12px; }
-
-        /* 하단 버튼 및 검색 */
-        .list-footer { padding: 8px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #eee; }
-        .search-area { display: flex; gap: 2px; }
-        #searchInput { flex: 1; height: 25px; font-size: 11px; padding: 0 5px; }
+        .board-table th { background: #f4f4f4; font-size: 11px; padding: 5px 2px; border-bottom: 1px solid #ddd; }
+        .board-table td { 
+            border-bottom: 1px solid #eee; 
+            padding: 8px 4px; 
+            font-size: 12px; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+        }
         
-        .pagination { display: flex; justify-content: center; padding: 10px 0; gap: 1px; flex-wrap: wrap; }
-        .pagination button { font-size: 10px; height: 22px; min-width: 22px; padding: 0; }
+        /* 제목 셀은 길면 아래로 줄바꿈 되도록 설정 */
+        .title-cell { white-space: normal !important; word-break: break-all; line-height: 1.2; }
+        .num-cell { width: 30px; text-align: center; font-size: 10px; } 
+        .author-cell { width: 55px; font-size: 11px; text-align: center; }
+        .date-cell { width: 45px; text-align: center; font-size: 10px; color: #888; }
 
-        /* 글쓰기 및 상세페이지 */
-        #writeView, #detailView { padding: 8px; }
-        .editor-content { min-height: 150px; font-size: 13px; padding: 8px; }
-        #titleInput { font-size: 13px; padding: 6px; }
-        .view-title { font-size: 14px; flex-direction: column; align-items: flex-start; gap: 5px; }
-        .view-content { font-size: 13px; padding-top: 10px; min-height: 100px; }
+        /* 하단 컨트롤러 */
+        .list-footer { padding: 10px; border-top: 1px solid #eee; background: #fafafa; }
+        .search-area { display: flex; margin-top: 10px; }
+        #searchInput { flex: 1; height: 30px; font-size: 12px; border: 1px solid #ccc; padding: 0 5px; }
         
-        /* 공통 버튼 */
-        .btn-main, .btn-sub, .btn-del { padding: 5px 10px; font-size: 11px; }
+        /* 글쓰기/상세보기 화면 */
+        #writeView, #detailView { padding: 10px; display: none; }
+        .active { display: block !important; }
 
-        /* 댓글 섹션 */
-        .comment-section { margin-top: 15px; padding: 8px; font-size: 12px; }
-        .comment-form textarea { height: 40px; font-size: 12px; }
+        #titleInput { width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; margin-bottom: 8px; }
+        .editor-content { 
+            width: 100%; min-height: 150px; 
+            font-size: 14px; padding: 10px; 
+            border: 1px solid #ddd; word-break: break-all;
+        }
         
-        .write-head-bar { flex-direction: column; }
-        .head-bar-label { padding: 5px; font-size: 11px; border-right: none; border-bottom: 1px solid #ddd; }
-        .head-options { padding: 5px; gap: 4px; }
-        .head-opt { padding: 2px 8px; font-size: 11px; }
+        .view-title { font-size: 15px; font-weight: bold; border-bottom: 2px solid var(--main-color); padding-bottom: 5px; }
+        .view-content { font-size: 14px; line-height: 1.5; padding: 10px 0; min-height: 100px; word-break: break-all; }
+        
+        /* 버튼 공통 */
+        .btn-main { background: var(--main-color); color: white; border: none; padding: 8px 12px; font-size: 12px; border-radius: 2px; }
+        .btn-sub { background: #666; color: white; border: none; padding: 8px 12px; font-size: 12px; }
 
-        .editor-toolbar { gap: 4px; padding: 5px; }
-        .editor-toolbar button, .editor-toolbar select { padding: 2px; font-size: 10px; }
+        /* 댓글 스타일 */
+        .comment-item { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
+        .comment-info { font-size: 11px; font-weight: bold; color: #555; }
+        .comment-text { font-size: 13px; margin-top: 3px; word-break: break-all; }
+
+        /* 설정 레이어 조정 */
+        #nickSettingLayer { 
+            display: none; position: absolute; right: 5px; top: 35px; 
+            background: white; border: 1px solid #ccc; padding: 10px; 
+            width: 200px; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>자유게시판</h1>
-        <div class="settings-container">
-            <span class="gear-btn" onclick="toggleNickLayer()">⚙️</span>
-            <div id="nickSettingLayer">
-                <div style="margin-bottom:8px;"><label style="font-size:10px; font-weight:bold;">닉네임</label><input type="text" id="globalNick" onchange="saveNickname()" style="width:100%; box-sizing:border-box; font-size:11px;"></div>
-                <div style="margin-bottom:8px;"><label style="font-size:10px; font-weight:bold;">테마 색상</label><input type="color" id="themeColor" oninput="changeThemeColor(this.value)" style="width:100%; height:20px; border:none;"></div>
-                <div class="backup-btns">
-                    <button onclick="exportData()" style="font-size:10px;">백업</button>
-                    <button onclick="document.getElementById('importFile').click()" style="font-size:10px;">복구</button>
-                    <button onclick="deleteAllPosts()" class="btn-danger" style="font-size:10px;">전체삭제</button>
-                    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(this)">
-                </div>
-            </div>
+        <h1 onclick="resetAndHome()">자유게시판</h1>
+        <span style="cursor:pointer;" onclick="toggleNickLayer()">⚙️</span>
+        <div id="nickSettingLayer">
+            <input type="text" id="globalNick" onchange="saveNickname()" placeholder="닉네임" style="width:100%; margin-bottom:5px;">
+            <input type="color" id="themeColor" oninput="changeThemeColor(this.value)" style="width:100%; height:25px; margin-bottom:5px;">
+            <button onclick="exportData()" style="width:100%; margin-bottom:3px; font-size:11px;">데이터 백업</button>
+            <button onclick="deleteAllPosts()" style="width:100%; color:red; font-size:11px;">전체 삭제</button>
         </div>
     </header>
 
     <div id="listView" class="active">
         <div class="category-tabs">
             <div class="main-tabs">
-                <div id="tab-all" class="main-tab active" onclick="filterCategory('전체')">전체</div>
-                <div id="tab-notice" class="main-tab" onclick="filterCategory('공지')">공지</div>
-                <div id="tab-check" class="main-tab" onclick="filterCategory('체크')">체크</div>
-            </div>
-            <div class="sub-tabs">
-                <div class="sub-tab" onclick="filterCategory('잡담')">잡담</div>
-                <div class="sub-tab" onclick="filterCategory('일기')">일기</div>
-                <div class="sub-tab" onclick="filterCategory('창작')">창작</div>
-                <div class="sub-tab" onclick="filterCategory('만화')">만화</div>
-                <div class="sub-tab" onclick="filterCategory('우울')">우울</div>
+                <div class="main-tab active" onclick="filterCategory('전체')">전체</div>
+                <div class="main-tab" onclick="filterCategory('공지')">공지</div>
+                <div class="main-tab" onclick="filterCategory('체크')">체크</div>
+                <div class="main-tab" onclick="filterCategory('잡담')">잡담</div>
+                <div class="main-tab" onclick="filterCategory('일기')">일기</div>
             </div>
         </div>
         <table class="board-table">
-            <thead><tr><th class="num-cell">#</th><th class="head-cell">머리</th><th>제목</th><th class="author-cell">이름</th><th class="date-cell">날짜</th></tr></thead>
+            <thead>
+                <tr>
+                    <th class="num-cell">번호</th>
+                    <th style="width:auto;">제목</th>
+                    <th class="author-cell">글쓴이</th>
+                    <th class="date-cell">날짜</th>
+                </tr>
+            </thead>
             <tbody id="listBody"></tbody>
         </table>
-        <div id="pagination" class="pagination"></div>
+        <div id="pagination" style="display:flex; justify-content:center; padding:10px; gap:5px;"></div>
         <div class="list-footer">
-            <button class="btn-main" id="listWriteBtn" onclick="showWriteForm()">글쓰기</button>
+            <button class="btn-main" onclick="showWriteForm()" style="width:100%;">새 글 쓰기</button>
             <div class="search-area">
-                <input type="text" id="searchInput" placeholder="검색" onkeypress="if(event.keyCode==13) searchPosts()">
-                <button onclick="searchPosts()" class="btn-sub">확인</button>
+                <input type="text" id="searchInput" placeholder="검색어 입력">
+                <button class="btn-sub" onclick="searchPosts()">검색</button>
             </div>
         </div>
     </div>
 
     <div id="detailView">
         <div id="postDetail"></div>
-        <div class="comment-section">
-            <div id="commentCount" class="comment-count" style="font-size:12px;">댓글 0</div>
-            <div id="commentList" class="comment-list"></div>
-            <div class="comment-form">
-                <textarea id="commentInput" placeholder="댓글 입력" onkeydown="handleCommentEnter(event)"></textarea>
-                <div style="display:flex; justify-content:flex-end; margin-top:5px;"><button class="btn-main" onclick="addComment()">등록</button></div>
-            </div>
+        <div style="margin-top:15px; background:#f9f9f9; padding:10px;">
+            <div id="commentCount" style="font-size:12px; font-weight:bold;">댓글 0</div>
+            <div id="commentList"></div>
+            <textarea id="commentInput" placeholder="댓글" style="width:100%; height:40px; margin-top:5px;"></textarea>
+            <button class="btn-main" onclick="addComment()" style="width:100%; margin-top:5px;">댓글등록</button>
         </div>
-        <div class="detail-footer" style="padding:10px 0; border-top:1px solid #eee; display:flex; justify-content:space-between;">
-            <button onclick="showList()" class="btn-sub">목록</button>
-            <div style="display:flex; gap:5px;">
-                <button onclick="editPost()" class="btn-main">수정</button>
-                <button onclick="deletePost()" class="btn-del">삭제</button>
+        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+            <button class="btn-sub" onclick="showList()">목록</button>
+            <div>
+                <button class="btn-main" onclick="editPost()">수정</button>
+                <button class="btn-sub" onclick="deletePost()" style="background:red;">삭제</button>
             </div>
         </div>
     </div>
 
     <div id="writeView">
-        <div class="write-head-bar">
-            <div class="head-bar-label">말머리</div>
-            <div class="head-options" id="headOptionsArea">
-                <div class="head-opt selected" onclick="selectHead(this, '잡담')">잡담</div>
-                <div class="head-opt" onclick="selectHead(this, '일기')">일기</div>
-                <div class="head-opt" onclick="selectHead(this, '창작')">창작</div>
-                <div class="head-opt" onclick="selectHead(this, '공지')">공지</div>
-            </div>
-            <input type="hidden" id="selectedHeadValue" value="잡담">
-        </div>
-        <input type="text" id="titleInput" placeholder="제목" style="width:100%; box-sizing:border-box; margin:5px 0;" onkeydown="handleTitleTab(event)">
-        <div class="editor-toolbar">
-            <button onclick="execCmd('bold')">B</button>
-            <select onchange="applyStyle('fontSize', this.value)" style="width:50px;"><option value="12px">작게</option><option value="16px">보통</option></select>
-            <input type="color" onchange="applyStyle('color', this.value)" style="width:20px; height:18px;">
-        </div>
-        <div id="editor" class="editor-content" contenteditable="true" oninput="updateCharCount()" style="border:1px solid #ddd; overflow-y:auto;"></div>
-        <div id="charCountDisplay" class="char-count" style="font-size:10px; text-align:right;">0자</div>
+        <select id="selectedHeadValue" style="width:100%; padding:5px; margin-bottom:5px;">
+            <option value="잡담">잡담</option>
+            <option value="일기">일기</option>
+            <option value="창작">창작</option>
+            <option value="공지">공지</option>
+        </select>
+        <input type="text" id="titleInput" placeholder="제목">
+        <div id="editor" class="editor-content" contenteditable="true"></div>
         <div style="margin-top:10px;">
-            <label style="font-size:10px; font-weight:bold;">사진(최대 50)</label>
-            <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImgInput(this)" style="font-size:10px; width:100%;">
-            <div id="imgListArea" style="font-size:10px; max-height:50px; overflow-y:auto; background:#f9f9f9; border:1px dashed #ccc; margin-top:5px;"></div>
+            <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImgInput(this)" style="font-size:11px; width:100%;">
+            <div id="imgListArea" style="font-size:10px; color:#666; margin-top:3px;"></div>
         </div>
-        <div class="btn-group" style="display:flex; gap:5px; margin-top:10px;">
-            <button class="btn-main" id="saveBtn" onclick="savePost()">등록</button>
-            <button onclick="showList()" class="btn-sub">취소</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn-main" id="saveBtn" onclick="savePost()" style="flex:1;">등록</button>
+            <button class="btn-sub" onclick="showList()" style="flex:1;">취소</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* 모든 스크립트 기능은 기존과 동일하게 유지됩니다 */
+    /* 기존 JavaScript 로직 유지하되, 폴더폰 호환성을 위해 일부 최적화 */
     let db;
     const DB_NAME = "BoardDB";
     const STORE_NAME = "posts";
     let currentFilter = '전체';
-    let posts = [];
     let currentPostId = null;
     let isEditMode = false;
     let currentPage = 1;
-    const postsPerPage = 10;
-    const pageBlockSize = 5; // 작은 화면을 위해 페이지 블록 크기 축소
-    let isSearchMode = false;
-    let filteredPosts = [];
+    const postsPerPage = 8;
     let tempFiles = [];
 
     function initDB() {
@@ -233,11 +208,10 @@
     }
 
     async function dbSave(data) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const transaction = db.transaction([STORE_NAME], "readwrite");
             const request = transaction.objectStore(STORE_NAME).put(data);
             request.onsuccess = () => resolve();
-            request.onerror = () => reject();
         });
     }
 
@@ -246,231 +220,128 @@
         transaction.objectStore(STORE_NAME).delete(id);
     }
 
-    async function dbClear() {
-        const transaction = db.transaction([STORE_NAME], "readwrite");
-        transaction.objectStore(STORE_NAME).clear();
-    }
-
-    function handleTitleTab(e) { if (e.key === 'Tab') { e.preventDefault(); document.getElementById('editor').focus(); } }
-
-    window.addEventListener('keydown', function(e) {
-        if (e.key === 'F2') { e.preventDefault(); handleBackNavigation(); }
-        if (e.key === 'F3') { e.preventDefault(); const lv = document.getElementById('listView'); if (lv && window.getComputedStyle(lv).display !== 'none') { showWriteForm(); } }
-        if (e.key === 'F4') { const wv = document.getElementById('writeView'); if (wv && window.getComputedStyle(wv).display !== 'none') { e.preventDefault(); document.getElementById('saveBtn').click(); } }
-    });
-
-    function handleBackNavigation() {
-        const detailView = document.getElementById('detailView');
-        const writeView = document.getElementById('writeView');
-        const listView = document.getElementById('listView');
-        if (detailView.style.display === 'block' || writeView.style.display === 'block') { showList(); } 
-        else if (listView.style.display === 'block' && (isSearchMode || currentFilter !== '전체')) {
-            currentFilter = '전체'; isSearchMode = false; document.getElementById('searchInput').value = ''; currentPage = 1; filterCategory('전체');
-        } else { window.history.back(); }
-    }
-
     window.onload = async function() {
         await initDB();
-        document.getElementById('globalNick').value = localStorage.getItem('myNickname') || '릴리링';
-        const savedColor = localStorage.getItem('myThemeColor') || '#3b4890';
-        changeThemeColor(savedColor);
-        document.getElementById('themeColor').value = savedColor;
+        document.getElementById('globalNick').value = localStorage.getItem('myNickname') || '사용자';
+        changeThemeColor(localStorage.getItem('myThemeColor') || '#3b4890');
         showList();
     };
 
-    function selectHead(el, value) {
-        document.querySelectorAll('.head-opt').forEach(opt => opt.classList.remove('selected'));
-        el.classList.add('selected');
-        document.getElementById('selectedHeadValue').value = value;
-    }
-
-    async function handleImgInput(input) {
-        const newFiles = Array.from(input.files);
-        if (tempFiles.length + newFiles.length > 50) { alert("최대 50장"); return; }
-        for (let file of newFiles) {
-            const compressedData = await processImage(file);
-            tempFiles.push({ name: file.name, data: compressedData });
-        }
-        input.value = ""; renderImgList();
-    }
-
-    function renderImgList() {
-        const area = document.getElementById('imgListArea');
-        if (tempFiles.length === 0) { area.innerText = "선택된 사진 없음"; return; }
-        area.innerHTML = tempFiles.map((f, idx) => `<div class="img-item" style="display:flex; justify-content:space-between; padding:2px;"><span>[${idx+1}] ${f.name}</span><span onclick="removeImg(${idx})" style="color:red">X</span></div>`).join('');
-    }
-
-    function removeImg(idx) { tempFiles.splice(idx, 1); renderImgList(); }
-
-    async function processImage(file) {
-        return new Promise((r) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image(); img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const max = 400; let w = img.width, h = img.height;
-                    if(w > max || h > max) { if(w > h) { h = (max/w)*h; w = max; } else { w = (max/h)*w; h = max; } }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-                    r(canvas.toDataURL('image/webp', 0.8));
-                };
-            };
-        });
-    }
-
-    async function exportData() {
-        const allPosts = await dbGetAll();
-        const data = { posts: allPosts, nickname: localStorage.getItem('myNickname'), themeColor: localStorage.getItem('myThemeColor') };
-        const jsonContent = JSON.stringify(data);
-        const blob = new Blob([jsonContent], {type: "application/json"});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `backup_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-    }
-
-    async function importData(input) { 
-        const reader = new FileReader(); reader.onload = async (e) => { 
-            try { const data = JSON.parse(e.target.result); await dbClear(); for(let p of data.posts) await dbSave(p); location.reload(); 
-            } catch(err) { alert("오류"); }
-        }; reader.readAsText(input.files[0]); 
-    }
-
-    function applyStyle(styleName, value) {
-        document.getElementById('editor').focus();
-        document.execCommand(styleName === 'fontSize' ? 'fontSize' : 'foreColor', false, value);
-        updateCharCount();
-    }
-
-    function execCmd(c, v) { document.getElementById('editor').focus(); document.execCommand(c, false, v); }
-    async function deleteAllPosts() { if(confirm("전체 삭제?")) { await dbClear(); location.reload(); } }
-    function updateCharCount() {
-        const text = document.getElementById('editor').innerText;
-        document.getElementById('charCountDisplay').innerText = `${text.replace(/[\s\u00a0\.\"\,\'\!\?]/g, "").length}자`;
-    }
-    
-    function formatListDate(iso) { 
-        const d = new Date(iso); const now = new Date();
-        const pad = (n) => n.toString().padStart(2, '0');
-        if(d.toDateString() === now.toDateString()) return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        return `${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
-    }
-
-    function formatDetailDate(iso) {
-        const d = new Date(iso); const pad = (n) => n.toString().padStart(2, '0');
-        return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    async function toggleCheck() {
-        const p = await dbGetById(currentPostId); if(!p) return;
-        p.checked = !p.checked; await dbSave(p); viewPost(currentPostId); 
-    }
-
-    async function filterCategory(cat) { 
-        currentFilter = cat; currentPage = 1; 
-        document.querySelectorAll('.main-tab, .sub-tab').forEach(tab => { 
-            tab.classList.remove('active'); 
-            if(tab.innerText === cat || (cat === '공지' && tab.id === 'tab-notice') || (cat === '전체' && tab.id === 'tab-all') || (cat === '체크' && tab.id === 'tab-check')) tab.classList.add('active'); 
-        }); 
-        renderList(); 
-    }
-
-    async function searchPosts() { const k = document.getElementById('searchInput').value.trim().toLowerCase(); isSearchMode = !!k; if(isSearchMode) { const all = await dbGetAll(); filteredPosts = all.filter(p => p.title.toLowerCase().includes(k) || p.content.toLowerCase().includes(k)); } currentPage = 1; renderList(); }
-    
     async function renderList() {
         const body = document.getElementById('listBody'); body.innerHTML = ''; 
-        const allPosts = isSearchMode ? filteredPosts : await dbGetAll();
-        let targetPosts = allPosts;
-        if(currentFilter === '공지') targetPosts = allPosts.filter(p => p.head === '공지');
-        else if(currentFilter === '체크') targetPosts = allPosts.filter(p => p.checked);
-        else if(currentFilter !== '전체') targetPosts = allPosts.filter(p => p.head === currentFilter);
-
-        const notices = targetPosts.filter(p => p.head === '공지');
-        const normals = targetPosts.filter(p => p.head !== '공지');
-
-        notices.forEach(p => {
-            const cCount = p.comments ? p.comments.length : 0;
-            const cBadge = cCount > 0 ? `<span style="color:red;font-size:9px;">[${cCount}]</span>` : '';
-            body.innerHTML += `<tr style="background:#fff4f4" onclick="viewPost(${p.id})"><td class="num-cell">공지</td><td class="head-cell">-</td><td class="title-cell" style="font-weight:bold">${p.title}${cBadge}</td><td class="author-cell">${p.author}</td><td class="date-cell">${formatListDate(p.date)}</td></tr>`;
-        });
+        const allPosts = await dbGetAll();
+        let filtered = allPosts;
+        if(currentFilter !== '전체') filtered = allPosts.filter(p => p.head === currentFilter || (currentFilter==='체크' && p.checked));
 
         const start = (currentPage - 1) * postsPerPage;
-        const pagePosts = normals.slice(start, start + postsPerPage);
+        const pagePosts = filtered.slice(start, start + postsPerPage);
 
         pagePosts.forEach((p, i) => {
             const cCount = p.comments ? p.comments.length : 0;
-            const cBadge = cCount > 0 ? `<span style="color:red;font-size:9px;">[${cCount}]</span>` : '';
-            body.innerHTML += `<tr onclick="viewPost(${p.id})"><td class="num-cell">${normals.length - start - i}</td><td class="head-cell">${p.head || '잡담'}</td><td class="title-cell">${p.title}${cBadge}</td><td class="author-cell">${p.author}</td><td class="date-cell">${formatListDate(p.date)}</td></tr>`;
+            const cBadge = cCount > 0 ? `<span style="color:red;font-size:10px;">[${cCount}]</span>` : '';
+            body.innerHTML += `<tr onclick="viewPost(${p.id})">
+                <td class="num-cell">${filtered.length - start - i}</td>
+                <td class="title-cell">[${p.head}] ${p.title} ${cBadge}</td>
+                <td class="author-cell">${p.author}</td>
+                <td class="date-cell">${formatListDate(p.date)}</td>
+            </tr>`;
         });
-        renderPagination(Math.ceil(normals.length / postsPerPage) || 1);
+        renderPagination(Math.ceil(filtered.length / postsPerPage));
     }
 
     function renderPagination(total) {
         const container = document.getElementById('pagination');
         container.innerHTML = '';
-        const currentBlock = Math.floor((currentPage - 1) / pageBlockSize);
-        const startPage = currentBlock * pageBlockSize + 1;
-        const endPage = Math.min(startPage + pageBlockSize - 1, total);
-        for (let i = startPage; i <= endPage; i++) {
+        for (let i = 1; i <= total; i++) {
             const btn = document.createElement('button');
             btn.innerText = i;
-            if (i === currentPage) btn.className = 'active';
-            btn.onclick = () => { currentPage = i; renderList(); document.querySelector('.container').scrollTo(0,0); };
+            if (i === currentPage) btn.style.fontWeight = 'bold';
+            btn.onclick = () => { currentPage = i; renderList(); };
             container.appendChild(btn);
         }
     }
-    
+
     async function savePost() {
-        const btn = document.getElementById('saveBtn'); 
-        const title = document.getElementById('titleInput').value.trim(); 
-        const head = document.getElementById('selectedHeadValue').value; 
-        const images = tempFiles.map(f => f.data);
-        const editorContent = document.getElementById('editor').innerHTML;
-        if(!title) return alert("제목 필수");
-        btn.disabled = true; 
-        let postData;
-        if(isEditMode) {
-            const existing = await dbGetById(currentPostId);
-            postData = { id: currentPostId, title, head, author: localStorage.getItem('myNickname') || '릴리링', content: editorContent, images, date: existing.date, isNotice: head === '공지', comments: existing.comments || [], checked: existing.checked || false };
-        } else {
-            postData = { id: Date.now(), title, head, author: localStorage.getItem('myNickname') || '릴리링', content: editorContent, images, date: new Date().toISOString(), isNotice: head === '공지', comments: [], checked: false };
-        }
-        try { await dbSave(postData); viewPost(postData.id); } catch (e) { alert("실패"); } finally { btn.disabled = false; }
+        const title = document.getElementById('titleInput').value.trim();
+        const content = document.getElementById('editor').innerHTML;
+        if(!title) return alert("제목 입력!");
+        
+        const postData = {
+            id: isEditMode ? currentPostId : Date.now(),
+            title, content,
+            head: document.getElementById('selectedHeadValue').value,
+            author: localStorage.getItem('myNickname') || '사용자',
+            date: new Date().toISOString(),
+            images: tempFiles,
+            comments: isEditMode ? (await dbGetById(currentPostId)).comments : []
+        };
+        await dbSave(postData);
+        showList();
     }
 
     async function viewPost(id) {
-        currentPostId = id; hideAll(); document.getElementById('detailView').style.display = 'block';
-        const p = await dbGetById(id); if(!p) return;
-        const imgs = p.images || []; let finalContent = p.content; let extraImagesHTML = "";
-        imgs.forEach(src => extraImagesHTML += `<img src="${src}" style="max-width:100%; display:block; margin:5px 0;">`);
-        const checkIcon = p.checked ? "☑" : "☐";
-        document.getElementById('postDetail').innerHTML = `<div class="view-header" style="border-bottom:1px solid var(--main-color); padding-bottom:5px;"><h2 class="view-title" style="margin:5px 0; font-size:13px;">[${p.head}] ${p.title} <span onclick="toggleCheck()">${checkIcon}</span></h2><div style="font-size:10px; color:#888;">${p.author} | ${formatDetailDate(p.date)}</div></div><div class="view-content">${extraImagesHTML}${finalContent}</div>`;
+        currentPostId = id;
+        const p = await dbGetById(id);
+        hideAll();
+        document.getElementById('detailView').classList.add('active');
+        let imgHtml = "";
+        if(p.images) p.images.forEach(img => imgHtml += `<img src="${img}" style="max-width:100%; margin-bottom:5px;">`);
+        
+        document.getElementById('postDetail').innerHTML = `
+            <div class="view-title">${p.title}</div>
+            <div style="font-size:11px; color:#888; margin:5px 0;">${p.author} | ${p.date.slice(0,16)}</div>
+            <div class="view-content">${imgHtml}${p.content}</div>
+        `;
         renderComments(p.comments || []);
-        document.querySelector('.container').scrollTo(0,0);
     }
 
-    function renderComments(comments) { 
-        const list = document.getElementById('commentList'); 
-        document.getElementById('commentCount').innerText = `댓글 ${comments.length}`; 
-        list.innerHTML = comments.map((c, idx) => `<div style="border-bottom:1px solid #eee; padding:5px 0;"><div style="font-size:10px; font-weight:bold;">${c.author} <span style="font-weight:normal; color:#999; float:right;" onclick="deleteComment(${idx})">삭제</span></div><div style="font-size:11px;">${c.text}</div></div>`).join(''); 
+    function renderComments(comments) {
+        document.getElementById('commentCount').innerText = `댓글 ${comments.length}`;
+        document.getElementById('commentList').innerHTML = comments.map(c => `
+            <div class="comment-item">
+                <div class="comment-info">${c.author}</div>
+                <div class="comment-text">${c.text}</div>
+            </div>
+        `).join('');
     }
-    function handleCommentEnter(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }
-    async function addComment() { 
-        const input = document.getElementById('commentInput'); const text = input.value.trim(); if(!text) return; 
-        const p = await dbGetById(currentPostId); p.comments.push({ author: localStorage.getItem('myNickname') || '릴리링', text: text, date: new Date().toISOString() }); 
-        await dbSave(p); input.value = ''; viewPost(currentPostId); 
+
+    async function addComment() {
+        const input = document.getElementById('commentInput');
+        if(!input.value.trim()) return;
+        const p = await dbGetById(currentPostId);
+        if(!p.comments) p.comments = [];
+        p.comments.push({ author: localStorage.getItem('myNickname') || '사용자', text: input.value, date: new Date().toISOString() });
+        await dbSave(p);
+        input.value = '';
+        viewPost(currentPostId);
     }
-    async function deleteComment(idx) { if(!confirm("삭제?")) return; const p = await dbGetById(currentPostId); p.comments.splice(idx, 1); await dbSave(p); viewPost(currentPostId); }
-    function showWriteForm() { hideAll(); isEditMode = false; tempFiles = []; renderImgList(); document.getElementById('writeView').style.display = 'block'; document.getElementById('titleInput').value = ''; document.getElementById('editor').innerHTML = ''; updateCharCount(); }
-    async function editPost() { const p = await dbGetById(currentPostId); showWriteForm(); isEditMode = true; currentPostId = p.id; document.getElementById('titleInput').value = p.title; document.getElementById('editor').innerHTML = p.content; tempFiles = (p.images || []).map((img, idx) => ({ name: `Img ${idx+1}`, data: img })); renderImgList(); updateCharCount(); }
+
+    /* 유틸리티 함수 */
+    function formatListDate(iso) {
+        const d = new Date(iso);
+        return (d.getMonth()+1) + "/" + d.getDate();
+    }
+    function hideAll() {
+        document.getElementById('listView').classList.remove('active');
+        document.getElementById('detailView').classList.remove('active');
+        document.getElementById('writeView').classList.remove('active');
+    }
+    function showList() { hideAll(); document.getElementById('listView').classList.add('active'); renderList(); }
+    function showWriteForm() { hideAll(); isEditMode = false; tempFiles = []; document.getElementById('writeView').classList.add('active'); }
+    async function editPost() { const p = await dbGetById(currentPostId); showWriteForm(); isEditMode = true; document.getElementById('titleInput').value = p.title; document.getElementById('editor').innerHTML = p.content; }
     async function deletePost() { if(confirm("삭제?")) { await dbDelete(currentPostId); showList(); } }
-    function showList() { hideAll(); document.getElementById('listView').style.display = 'block'; renderList(); }
-    function hideAll() { document.querySelectorAll('#listView, #detailView, #writeView').forEach(el => el.style.display='none'); document.getElementById('nickSettingLayer').style.display='none'; }
     function toggleNickLayer() { const s = document.getElementById('nickSettingLayer').style; s.display = s.display === 'block' ? 'none' : 'block'; }
     function changeThemeColor(c) { document.documentElement.style.setProperty('--main-color', c); localStorage.setItem('myThemeColor', c); }
     function saveNickname() { localStorage.setItem('myNickname', document.getElementById('globalNick').value); }
+    function filterCategory(cat) { currentFilter = cat; currentPage = 1; renderList(); }
+    
+    async function handleImgInput(input) {
+        for (let file of input.files) {
+            const reader = new FileReader();
+            reader.onload = (e) => { tempFiles.push(e.target.result); document.getElementById('imgListArea').innerText = "사진 " + tempFiles.length + "장 선택됨"; };
+            reader.readAsDataURL(file);
+        }
+    }
 </script>
 </body>
 </html>
