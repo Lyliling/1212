@@ -3,177 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title></title>
     <style>
-        /* 초기화 */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #fff; font-family: sans-serif; width: 100%; overflow-x: hidden; }
-
-        /* 페이지 레이아웃: 전환 시 다른 화면은 아예 존재하지 않게 처리 */
-        .page { width: 100%; min-height: 100vh; padding: 12px; display: none; background: #fff; position: absolute; top: 0; left: 0; }
-        .active { display: block !important; }
-
-        /* 버튼 레이아웃: 우측 상단/하단 배치 */
-        .header-area { width: 100%; height: 45px; margin-bottom: 10px; }
-        .btn {
-            float: right; width: 95px; height: 38px; line-height: 38px;
-            background: #3b4890; color: #fff; text-align: center;
-            text-decoration: none; font-size: 14px; border: none; border-radius: 4px; font-weight: bold;
-        }
-        .btn-sub { background: #666; width: 75px; margin-right: 5px; }
-        .btn-red { background: #c00; width: 75px; }
-
-        /* 목록 폰트 크게 */
-        .list-item {
-            display: block; width: 100%; padding: 18px 8px;
-            border-bottom: 1px solid #f0f0f0; text-decoration: none; color: #000;
-            font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        :root { 
+            --main-color: #3b4890; 
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #eeeeee;
+            --input-bg: #ffffff;
+            --header-text: #ffffff;
         }
 
-        /* 입력창: 화면 최상단 고정 */
-        .input-box { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #bbb; margin-bottom: 12px; display: block; }
-        textarea.input-box { height: 160px; }
+        [data-theme='dark'] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --border-color: #333333;
+            --input-bg: #2d2d2d;
+        }
 
-        /* 본문 읽기 */
-        .v-title { font-size: 20px; font-weight: bold; border-bottom: 2px solid #3b4890; padding-bottom: 10px; margin-bottom: 12px; }
-        .v-content { font-size: 17px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; padding-bottom: 100px; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: var(--text-color); line-height: 1.5; transition: background 0.3s, color 0.3s; }
+        header { background: var(--main-color); color: var(--header-text); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 하단 버튼 바 */
-        .bottom-bar { position: fixed; bottom: 25px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        header h1 { font-size: 18px; margin: 0; cursor: default; user-select: none; }
+        header h1:active { opacity: 0.7; }
+
+        .header-icons { display: flex; align-items: center; gap: 5px; }
+        
+        .icon-btn { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 36px; 
+            height: 36px; 
+            cursor: pointer; 
+            user-select: none;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .icon-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: var(--header-text);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .board-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .board-table td { border-bottom: 1px solid var(--border-color); padding: 15px 5px; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .title-cell { font-size: 16px !important; padding-left: 10px !important; }
+        .date-cell { width: 55px; text-align: center; color: #888; font-size: 12px; }
+        
+        #titleInput { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid var(--border-color); font-size: 16px !important; background: var(--input-bg); color: var(--text-color); }
+        .editor-content { width: 100%; min-height: 350px; padding: 12px; box-sizing: border-box; border: 1px solid var(--border-color); font-size: 16px; line-height: 1.6; overflow-y: auto; background: var(--input-bg); }
+        .char-count { font-size: 13px; color: #666; text-align: right; margin-top: 5px; }
+        
+        .btn-main, .btn-sub, .btn-del { padding: 10px 18px; font-size: 14px; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-main { background: var(--main-color); color: white; }
+        .btn-sub { background: #666; color: white; }
+        .btn-del { background: #d9534f; color: white; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 3px; padding: 20px 0; }
+        .pagination button { padding: 6px 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-size: 14px; min-width: 32px; }
+        .pagination button.active { background: var(--main-color); color: white; font-weight: bold; }
+        .pagination button:disabled { opacity: 0.3; cursor: default; }
+        
+        .search-area { padding: 10px 15px; display: flex; gap: 5px; border-bottom: 1px solid var(--border-color); }
+        .search-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); border-radius: 4px; }
+
+        #listView, #detailView, #writeView { display: none; }
+        .active { display: block; }
+        
+        #nickSettingLayer { display: none; position: absolute; right: 10px; top: 45px; background: var(--input-bg); border: 1px solid var(--border-color); padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; width: 220px; border-radius: 8px; color: var(--text-color); }
+        .setting-item { margin-bottom: 12px; }
+        .setting-item label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; }
     </style>
 </head>
-<body>
+<body onclick="handleDoubleTap(event)">
 
-<div id="listPage" class="page active">
-    <div class="header-area">
-        <button class="btn" onclick="goWrite()">새 글 쓰 기</button>
+<div class="container">
+    <header id="mainHeader">
+        <h1 onclick="goHome()"></h1>
+        <div class="header-icons">
+            <button class="icon-btn" onclick="showWriteForm()" title="글쓰기">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+            </button>
+
+            <div class="settings-container" style="position: relative; display: flex;">
+                <button class="icon-btn" onclick="toggleNickLayer()" title="설정">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+
+                <div id="nickSettingLayer">
+                    <div class="setting-item">
+                        <label>닉네임</label>
+                        <input type="text" id="globalNick" onchange="saveNickname()" style="width:100%; padding:8px; box-sizing:border-box;">
+                    </div>
+                    <div class="setting-item">
+                        <label>상단 테마 색상</label>
+                        <input type="color" id="themeColorPicker" oninput="changeThemeColor(this.value)" style="width:100%; height:30px; border:none; padding:0; background:none; cursor:pointer;">
+                    </div>
+                    <div class="setting-item">
+                        <label>다크모드</label>
+                        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"> 사용하기
+                    </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="listView" class="active">
+        <div class="search-area">
+            <input type="text" id="searchInput" placeholder="" onkeypress="if(event.keyCode==13) searchPosts()">
+            <button class="btn-main" onclick="searchPosts()">검색</button>
+        </div>
+        <table class="board-table">
+            <tbody id="listBody"></tbody>
+        </table>
+        <div id="pagination" class="pagination"></div>
     </div>
-    <div id="listContent"></div>
-</div>
 
-<div id="writePage" class="page">
-    <input type="text" id="inpTitle" class="input-box" placeholder="제목을 입력하세요">
-    <textarea id="inpContent" class="input-box" placeholder="내용을 입력하세요"></textarea>
-    <div style="text-align: right;">
-        <button class="btn btn-sub" onclick="saveData()">저장 완료</button>
-        <button class="btn btn-sub" onclick="goHome()">취소</button>
+    <div id="detailView">
+        <div id="postDetail"></div>
+        <div style="padding: 15px; display: flex; justify-content: space-between; border-top: 1px solid var(--border-color);">
+            <button onclick="showList()" class="btn-sub">목록</button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="editPost()" class="btn-main">수정</button>
+                <button onclick="deletePost()" class="btn-del">삭제</button>
+            </div>
+        </div>
     </div>
-</div>
 
-<div id="viewPage" class="page">
-    <div id="viewContent"></div>
-    <div class="bottom-bar">
-        <button class="btn btn-sub" onclick="goHome()">목록</button>
-        <button id="delBtn" class="btn btn-red">삭제</button>
+    <div id="writeView" style="padding: 15px;">
+        <input type="text" id="titleInput" placeholder="제목을 입력하세요">
+        <div id="editor" class="editor-content" contenteditable="true" oninput="updateCharCount()" style="margin-top:10px;"></div>
+        <div id="charCountDisplay" class="char-count">글자수: 0자</div>
+        <div style="margin-top:15px; display: flex; gap: 10px;">
+            <button onclick="showList()" class="btn-sub" style="flex: 1;">취소</button>
+            <button class="btn-main" id="saveBtn" onclick="savePost()" style="flex: 1;">등록</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // 데이터 보존을 위해 키 이름을 절대 바꾸지 않습니다.
-    var STORAGE_KEY = "LG_FOLDER_PERMANENT_V1";
+    let db;
+    const DB_NAME = "BoardDB";
+    const STORE_NAME = "posts";
+    let lastTap = 0;
+    let currentPostId = null;
+    
+    let currentPage = 1;
+    const postsPerPage = 10;
+    let filteredPosts = [];
+    let isSearchMode = false;
 
-    // 화면 전환 시 스크롤을 맨 위로 올리고 다른 페이지를 완전히 숨깁니다.
-    function showPage(id) {
-        var pages = document.getElementsByClassName('page');
-        for(var i=0; i<pages.length; i++) { pages[i].classList.remove('active'); }
-        document.getElementById(id).classList.add('active');
-        window.scrollTo(0, 0);
-    }
-
-    // 저장소에서 글 가져오기
-    function getPosts() {
-        var data = localStorage.getItem(STORAGE_KEY);
-        if (!data) return [];
-        try {
-            return JSON.parse(data);
-        } catch(e) {
-            console.error("Data parse error");
-            return [];
-        }
-    }
-
-    // 목록 그리기
-    function renderList() {
-        var posts = getPosts();
-        var container = document.getElementById('listContent');
-        container.innerHTML = "";
+    // --- 키보드 매핑 수정 부분 ---
+    document.addEventListener('keydown', function(e) {
+        // 안드로이드 블루투스 키보드 호환을 위해 고전적인 keyCode(20 = CapsLock)도 체크
+        const isCapsLock = (e.key === 'CapsLock' || e.code === 'CapsLock' || e.keyCode === 20);
         
-        if(posts.length === 0) {
-            container.innerHTML = "<div style='text-align:center; padding:50px 0; color:#999;'>글이 없습니다.</div>";
-            return;
+        if (isCapsLock) {
+            e.preventDefault();
+            // 오른쪽 Alt 기능을 위한 가상 이벤트 발생
+            const altEvent = new KeyboardEvent('keydown', {
+                key: 'AltGraph',
+                code: 'AltRight',
+                location: 2,
+                bubbles: true,
+                cancelable: true
+            });
+            window.dispatchEvent(altEvent);
+            return false;
         }
 
-        // 최신글 순서
-        posts.sort(function(a, b) { return b.id - a.id; });
-
-        for(var i=0; i<posts.length; i++) {
-            (function(p){
-                var item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerText = p.title;
-                item.onclick = function() { loadView(p.id); };
-                container.appendChild(item);
-            })(posts[i]);
-        }
-    }
-
-    // 글쓰기 이동
-    function goWrite() {
-        document.getElementById('inpTitle').value = "";
-        document.getElementById('inpContent').value = "";
-        showPage('writePage');
-    }
-
-    // 데이터 저장
-    function saveData() {
-        var t = document.getElementById('inpTitle').value;
-        var c = document.getElementById('inpContent').value;
-        if(!t.trim()) { alert("제목을 입력하세요."); return; }
-
-        var posts = getPosts();
-        var newPost = { id: Date.now(), title: t, content: c };
-        posts.push(newPost);
+        // 오른쪽 시프트 감지 (location 2가 오른쪽 키임을 의미)
+        const isRightShift = (e.code === 'ShiftRight' || (e.key === 'Shift' && e.location === 2) || e.keyCode === 16 && e.location === 2);
         
-        // 로컬 저장소에 즉시 강제 저장
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-        
-        goHome();
-    }
-
-    // 목록 화면으로
-    function goHome() {
-        renderList();
-        showPage('listPage');
-    }
-
-    // 본문 읽기
-    function loadView(id) {
-        var posts = getPosts();
-        var p = null;
-        for(var i=0; i<posts.length; i++) {
-            if(posts[i].id === id) { p = posts[i]; break; }
-        }
-        if(!p) return;
-
-        document.getElementById('viewContent').innerHTML = 
-            "<div class='v-title'>" + p.title + "</div>" +
-            "<div class='v-content'>" + p.content + "</div>";
-        
-        document.getElementById('delBtn').onclick = function() {
-            if(confirm("이 글을 삭제할까요?")) {
-                var currentPosts = getPosts();
-                var filtered = currentPosts.filter(function(x) { return x.id !== id; });
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-                goHome();
+        if (isRightShift) {
+            const writeView = document.getElementById('writeView');
+            if (writeView.style.display === 'block') {
+                e.preventDefault();
+                saveAndDetailPost();
             }
+        }
+    }, true);
+
+    // 모바일 환경에서 입력 도중 캡스락을 눌러도 반응하도록 처리
+    document.addEventListener('input', function(e) {
+        // 일부 안드로이드 키보드 앱이 CapsLock을 눌렀을 때 특정 이벤트를 발생시키지 않는 경우 대비
+        // (필요 시 추가 로직 작성 가능)
+    });
+    // ---------------------------
+
+    async function saveAndDetailPost() {
+        const title = document.getElementById('titleInput').value.trim();
+        const content = document.getElementById('editor').innerHTML;
+        if(!title) return alert("제목을 입력하세요.");
+        
+        const id = currentPostId || Date.now();
+        const postData = { 
+            id: id, 
+            title, 
+            content, 
+            author: document.getElementById('globalNick').value, 
+            date: new Date().toISOString() 
         };
-        showPage('viewPage');
+        
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        transaction.objectStore(STORE_NAME).put(postData);
+        transaction.oncomplete = () => viewPost(id);
     }
 
-    // 초기 실행 및 새로고침 대응
-    window.onload = function() {
+    function handleDoubleTap(e) {
+        const now = new Date().getTime();
+        if ((now - lastTap < 300) && (now - lastTap > 0)) {
+            if (document.getElementById('listView').style.display !== 'block') {
+                showList();
+            } else if (isSearchMode) {
+                goHome();
+            } else {
+                window.history.back();
+            }
+        }
+        lastTap = now;
+    }
+
+    function goHome() {
+        isSearchMode = false;
+        document.getElementById('searchInput').value = '';
+        currentPage = 1;
+        showList();
+    }
+
+    function changeThemeColor(color) {
+        document.documentElement.style.setProperty('--main-color', color);
+        localStorage.setItem('myThemeColor', color);
+    }
+
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: "id" });
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(); };
+        });
+    }
+
+    async function dbGetAll() {
+        return new Promise((resolve) => {
+            const transaction = db.transaction([STORE_NAME], "readonly");
+            const request = transaction.objectStore(STORE_NAME).getAll();
+            request.onsuccess = () => resolve(request.result.sort((a, b) => b.id - a.id));
+        });
+    }
+
+    function formatListDate(iso) {
+        const d = new Date(iso);
+        return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+    }
+
+    function updateCharCount() {
+        const text = document.getElementById('editor').innerText;
+        const count = text.replace(/[\s\u00a0\.\"\,\'\!\?]/g, "").length;
+        document.getElementById('charCountDisplay').innerText = `글자수: ${count}자`;
+    }
+
+    async function searchPosts() {
+        const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+        const allPosts = await dbGetAll();
+        if (keyword === "") {
+            isSearchMode = false;
+        } else {
+            isSearchMode = true;
+            filteredPosts = allPosts.filter(p => {
+                const inTitle = p.title.toLowerCase().includes(keyword);
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = p.content;
+                const inContent = tempDiv.innerText.toLowerCase().includes(keyword);
+                return inTitle || inContent;
+            });
+        }
+        currentPage = 1;
         renderList();
+    }
+
+    async function renderList() {
+        const allPosts = isSearchMode ? filteredPosts : await dbGetAll();
+        const body = document.getElementById('listBody');
+        const pagination = document.getElementById('pagination');
+        
+        const startIndex = (currentPage - 1) * postsPerPage;
+        const pagePosts = allPosts.slice(startIndex, startIndex + postsPerPage);
+        const totalPages = Math.ceil(allPosts.length / postsPerPage) || 1;
+
+        body.innerHTML = pagePosts.length > 0 ? pagePosts.map(p => `
+            <tr onclick="viewPost(${p.id})">
+                <td class="title-cell">${p.title}</td>
+                <td style="width:60px; text-align:center; opacity: 0.7;">${p.author}</td>
+                <td class="date-cell">${formatListDate(p.date)}</td>
+            </tr>
+        `).join('') : `<tr><td colspan="3" style="text-align:center; padding:30px; opacity:0.5;">게시글이 없습니다.</td></tr>`;
+
+        pagination.innerHTML = "";
+        
+        const firstBtn = document.createElement('button');
+        firstBtn.innerText = "«";
+        firstBtn.disabled = currentPage === 1;
+        firstBtn.onclick = () => changePage(1);
+        pagination.appendChild(firstBtn);
+
+        const prevBtn = document.createElement('button');
+        prevBtn.innerText = "‹";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => changePage(currentPage - 1);
+        pagination.appendChild(prevBtn);
+
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            if (i === currentPage) btn.className = 'active';
+            btn.onclick = () => changePage(i);
+            pagination.appendChild(btn);
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.innerText = "›";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => changePage(currentPage + 1);
+        pagination.appendChild(nextBtn);
+
+        const lastBtn = document.createElement('button');
+        lastBtn.innerText = "»";
+        lastBtn.disabled = currentPage === totalPages;
+        lastBtn.onclick = () => changePage(totalPages);
+        pagination.appendChild(lastBtn);
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        renderList();
+        window.scrollTo(0,0);
+    }
+
+    async function savePost() {
+        const title = document.getElementById('titleInput').value.trim();
+        const content = document.getElementById('editor').innerHTML;
+        if(!title) return alert("제목을 입력하세요.");
+        
+        const postData = { 
+            id: currentPostId || Date.now(), 
+            title, 
+            content, 
+            author: document.getElementById('globalNick').value, 
+            date: new Date().toISOString() 
+        };
+        
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        transaction.objectStore(STORE_NAME).put(postData);
+        transaction.oncomplete = () => showList();
+    }
+
+    async function viewPost(id) {
+        currentPostId = id;
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const request = transaction.objectStore(STORE_NAME).get(id);
+        request.onsuccess = () => {
+            const p = request.result;
+            hideAll();
+            document.getElementById('detailView').style.display = 'block';
+            document.getElementById('postDetail').innerHTML = `
+                <div style="padding:15px; border-bottom:1px solid var(--border-color);">
+                    <h2 style="margin:0; font-size:20px;">${p.title}</h2>
+                    <div style="font-size:13px; opacity:0.6; margin-top:5px;">${p.author} | ${new Date(p.date).toLocaleString()}</div>
+                </div>
+                <div style="padding:15px; font-size:16px; min-height:200px;">${p.content}</div>
+            `;
+            window.scrollTo(0,0);
+        };
+    }
+
+    function toggleDarkMode() {
+        const isDark = document.getElementById('darkModeToggle').checked;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('darkMode', isDark);
+    }
+
+    function showList() { 
+        hideAll(); 
+        currentPostId = null; 
+        document.getElementById('listView').style.display = 'block'; 
+        renderList(); 
+    }
+
+    function showWriteForm() { 
+        hideAll(); 
+        document.getElementById('writeView').style.display = 'block'; 
+        document.getElementById('titleInput').value=''; 
+        document.getElementById('editor').innerHTML=''; 
+        updateCharCount();
+    }
+    
+    async function editPost() {
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const request = transaction.objectStore(STORE_NAME).get(currentPostId);
+        request.onsuccess = () => {
+            const p = request.result;
+            showWriteForm();
+            document.getElementById('titleInput').value = p.title;
+            document.getElementById('editor').innerHTML = p.content;
+            updateCharCount();
+        };
+    }
+
+    async function deletePost() {
+        if(confirm("정말로 삭제하시겠습니까?")) {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            transaction.objectStore(STORE_NAME).delete(currentPostId);
+            transaction.oncomplete = () => showList();
+        }
+    }
+
+    function hideAll() { 
+        document.querySelectorAll('#listView, #detailView, #writeView').forEach(el => el.style.display='none'); 
+        document.getElementById('nickSettingLayer').style.display='none';
+    }
+
+    function toggleNickLayer() { 
+        const el = document.getElementById('nickSettingLayer');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveNickname() { localStorage.setItem('myNickname', document.getElementById('globalNick').value); }
+    async function deleteAllPosts() { if(confirm("모든 데이터가 영구 삭제됩니다.")) { const t = db.transaction([STORE_NAME], "readwrite"); t.objectStore(STORE_NAME).clear(); location.reload(); } }
+
+    window.onload = async () => {
+        await initDB();
+        document.getElementById('globalNick').value = localStorage.getItem('myNickname') || '사용자';
+        const savedColor = localStorage.getItem('myThemeColor') || '#3b4890';
+        changeThemeColor(savedColor);
+        document.getElementById('themeColorPicker').value = savedColor;
+        const savedDark = localStorage.getItem('darkMode') === 'true';
+        document.getElementById('darkModeToggle').checked = savedDark;
+        if(savedDark) document.documentElement.setAttribute('data-theme', 'dark');
+        showList();
     };
 </script>
-
 </body>
 </html>
